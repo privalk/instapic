@@ -1,23 +1,56 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import Home from '../views/Home.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
+
+      component: Home,
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
+      path: '/GridSelect',
+      name: 'GridSelect',
+      component: () => import('@/views/GridSelect.vue'),
     },
+    {
+      path: '/WaySelect',
+      name: 'WaySelect',
+      component: () => import('@/views/WaySelect.vue')
+    },
+    {
+      path: '/PaySelect',
+      name: 'PaySelect',
+      component: () => import('@/views/PaySelect.vue')
+    },
+    {
+      path: '/InputCoupon',
+      name: 'InputCoupon',
+      component: () => import('@/views/InputCoupon.vue')
+    },
+    {
+      path: '/Pay',
+      name: 'Pay',
+      component: () => import('@/views/Pay.vue')
+    },
+    {
+      path: '/PhotoFrameSelect',
+      name: 'PhotoFrameSelect',
+      component: () => import('@/views/PhotoFrameSelect.vue'),
+    },
+    {
+      path: '/BeautyFilter',
+      name: 'BeautyFilter',
+      component: () => import('@/views/BeautyFilter.vue'),
+    },
+    {
+      path: '/TakePhoto',
+      name: 'TakePhoto',
+      component: () => import('@/views/TakePhoto.vue'),
+    }
   ],
 })
 
 export default router
+
