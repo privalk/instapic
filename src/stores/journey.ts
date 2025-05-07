@@ -7,21 +7,26 @@ export const useJourneyStore = defineStore('journey', {
     state: () => ({
         config: useConfigStore(), // 引入配置文件
         num_grid: 4 as number, // 宫格数量
-        journeyWay: 0 as number, // 体验方式 1:上传   2：现场拍摄
+        journeyWay: 0 as number, // 体验方式 1:现场拍摄   2：上传 
         price: 35 as number, // 价格
         payWay: 0 as number, // 支付方式 1:支付宝 2:微信
         couponCode: '' as string, // 优惠码
         couponPrice: 0 as number, // 优惠金额
         photos: [] as string[], // 图片数组，用来存放用户拍的照片
-        remainAttempts: 2 as number, // 剩余拍摄次数
+        remainAttempts_takePhotos: 2 as number, // 剩余拍摄次数
+        capturedPhoto: null as string | null,  // 存储单张照片的base64
+        remainAttempts_selectFrame: 1 as number, // 剩余拍摄次数
     }),
     actions: {
         init() {
             if (this.config?.price !== undefined) {
                 this.price = this.config.price;
             }
-            if (this.config?.remainAttempts !== undefined) {
-                this.remainAttempts = this.config.remainAttempts;
+            if (this.config?.remainAttempts_takePhotos !== undefined) {
+                this.remainAttempts_takePhotos = this.config.remainAttempts_takePhotos;
+            }
+            if (this.config?.remainAttempts_selectFrame !== undefined) {
+                this.remainAttempts_selectFrame = this.config.remainAttempts_selectFrame;
             }
         },
 
@@ -34,10 +39,16 @@ export const useJourneyStore = defineStore('journey', {
             router.push({ name: 'PaySelect' });
         },
         decrementAttempt() {  // 新增响应式修改方法
-            if (this.remainAttempts > 0) {
-                this.remainAttempts--;
+            if (this.remainAttempts_takePhotos > 0) {
+                this.remainAttempts_takePhotos--;
             }
         },
+        setCapturedPhoto(base64Data: string) {
+            this.capturedPhoto = base64Data
+        },
+        clearCapturedPhoto() {
+            this.capturedPhoto = null
+        }
 
     }
 

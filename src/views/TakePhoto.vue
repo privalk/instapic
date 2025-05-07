@@ -53,7 +53,7 @@
                 <div v-if="timeLeft === 0" class="right_">
                     <img class="btn" v-if="num_photoToTakeNow < num_photoToTakeAll" src="\TakePhoto\btn_nextTake.png"
                         @click="handleNextTake" />
-                    <img class="btn" v-else src="\TakePhoto\btn_confirm.png" />
+                    <img class="btn" v-else src="\TakePhoto\btn_confirm.png" @click="handleConfirm" />
                     <div class="retake">
                         <img class="btn" src="\TakePhoto\btn_retake.png" @click="handleRetake" />
                         <div class="retake_">
@@ -121,7 +121,7 @@ export default defineComponent({
                             container.scrollTop = targetScrollTop;
                         }
                     }
-                    
+
                 };
 
                 // 首次尝试
@@ -174,7 +174,7 @@ export default defineComponent({
 
         const JourneyStore = useJourneyStore();
         const num_photoToTakeNow = ref(1);
-        const remainAttempts = computed(() => JourneyStore.remainAttempts);
+        const remainAttempts = computed(() => JourneyStore.remainAttempts_takePhotos);
         const num_photoToTakeAll = computed(() =>
             JourneyStore.num_grid === 8 ? 4 : JourneyStore.num_grid
         );
@@ -254,11 +254,16 @@ export default defineComponent({
             }
         };
         const handleRetake = () => {
-            if (JourneyStore.remainAttempts > 0 && JourneyStore.photos.length > 0) {
+            if (JourneyStore.remainAttempts_takePhotos > 0 && JourneyStore.photos.length > 0) {
                 JourneyStore.decrementAttempt();
                 JourneyStore.photos.pop(); // 删除最后一张照片
                 startCountdown();
             }
+        };
+        const handleConfirm = () => {
+
+            router.push('/PhotoFrameSelect');
+
         };
         // 新增canvas显示控制
         const showLastPhoto = () => {
@@ -278,13 +283,7 @@ export default defineComponent({
             clearInterval(timer);
             stream?.getTracks().forEach(track => track.stop());
         });
-        // 监听数组变化自动滚动
-        // 监听数组变化
-        watch(() => JourneyStore.photos.length, (newVal, oldVal) => {
-            if (newVal > oldVal) {
-                ensureScrollToBottom();
-            }
-        });
+
 
 
         return {
@@ -298,7 +297,7 @@ export default defineComponent({
             timeLeft,
             items: JourneyStore.photos,
             handleNextTake,
-            handleRetake, isProcessing, scrollRef, handleScrollUpdate
+            handleRetake, isProcessing, scrollRef, handleScrollUpdate, handleConfirm
         };
     },
 

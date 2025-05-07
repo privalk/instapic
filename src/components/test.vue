@@ -42,6 +42,7 @@ const getImageStyle = (img: DraggableImage) => ({
 
 // Interact.js 初始化
 onMounted(() => {
+  console.log(canvasContainer.value, canvas.value)
   if (!canvasContainer.value || !canvas.value) return
 
   // 设置画布尺寸

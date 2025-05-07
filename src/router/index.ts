@@ -48,7 +48,12 @@ const router = createRouter({
       path: '/TakePhoto',
       name: 'TakePhoto',
       component: () => import('@/views/TakePhoto.vue'),
-    }
+    },
+    {
+      path: '/EditPhotos',
+      name: 'EditPhotos',
+      component: () => import('@/views/EditPhotos.vue'),
+    },
   ],
 })
 

@@ -16,18 +16,19 @@
 
         <div class="body">
             <div class="body_">
-                <div class="btn_Selcet" @click="Select_Way(1)">
-                    <div class="btn_Selcet_">
-                        <img src="/WaySelect/img_upload.svg" />
-                        <img src="/WaySelect/text_upload.svg" />
-                    </div>
-                </div>
-                <div class="btn_Selcet" @click="Select_Way(2)">
-                    <div class="btn_Selcet_">
+                <div class="btn_Selcet_take" @click="Select_Way(1)">
+                    <div class="btn_Selcet_take_">
                         <img src="/WaySelect/img_takePhoto.svg" />
                         <img src="/WaySelect/text_takePhoto.svg" />
                     </div>
                 </div>
+                <div class="btn_Selcet_up" @click="Select_Way(2)">
+                    <div class="btn_Selcet_up_">
+                        <img src="/WaySelect/img_upload.svg" />
+                        <img src="/WaySelect/text_upload.svg" />
+                    </div>
+                </div>
+
             </div>
         </div>
         <div class="footer">
@@ -43,7 +44,7 @@ import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
 
 export default defineComponent({
-   
+
     setup() {
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_WaySelect);
@@ -82,6 +83,79 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.btn_Selcet_up_ {
+    /* 自动布局子元素 */
+    width: 396px;
+    height: 90px;
+    /* 自动布局 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    gap: 26px;
+    flex-grow: 1;
+    align-self: stretch;
+    z-index: 0;
+    border-radius: 50px;
+    background: linear-gradient(68deg, rgba(0, 0, 0, 0.9) -6%, rgba(38, 38, 38, 0.9) 19%, rgba(70, 70, 70, 0.9) 35%, rgba(55, 55, 55, 0.9) 54%, rgba(26, 26, 26, 0.8982) 107%), #797979;
+    box-sizing: border-box;
+    /* border: 2px solid; */
+    border-image: linear-gradient(180deg, #FFFFFF 0%, rgba(141, 141, 141, 0.15) 100%) 2;
+}
+
+.btn_Selcet_up {
+    /* 自动布局子元素 */
+    width: 416px;
+    height: 110px;
+    /* 自动布局 */
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+    gap: 10px;
+    z-index: 1;
+    border-radius: 100px;
+    box-sizing: border-box;
+
+    border-image: linear-gradient(180deg, rgba(135, 135, 135, 0.46) 0%, rgba(255, 255, 255, 0.5) 0%, rgba(0, 0, 0, 0) 100%) 10;
+    box-shadow: inset 0px 1px 10px 0px rgba(255, 255, 255, 0.3), inset 1px 0px 5px 0px rgba(0, 0, 0, 0.3), inset 0px 0px 5px 0px rgba(234, 234, 234, 0.3), inset 0px 1px 5px 0px rgba(0, 0, 0, 0.3);
+}
+
+.btn_Selcet_take_ {
+    /* 自动布局子元素 */
+    width: 600px;
+    height: 330px;
+    /* 自动布局 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    gap: 64px;
+    flex-grow: 1;
+    z-index: 0;
+    border-radius: 24px;
+    background: linear-gradient(43deg, rgba(255, 255, 255, 0.9) -69%, rgba(255, 255, 255, 0.9) -22%, rgba(254, 254, 254, 0.8982) 5%, rgba(255, 255, 255, 0.261) 49%, rgba(232, 232, 232, 0.7382) 78%, rgba(229, 229, 229, 0.9) 122%), #F3F3F3;
+    box-sizing: border-box;
+    /* border: 2px solid; */
+    border-image: linear-gradient(180deg, #FFFFFF 0%, rgba(141, 141, 141, 0.15) 100%) 2;
+}
+
+.btn_Selcet_take {
+    /* 自动布局子元素 */
+    width: 620px;
+    height: 350px;
+    /* 自动布局 */
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 10px;
+    z-index: 0;
+    border-radius: 36px;
+    box-sizing: border-box;
+    /* border: 10px solid; */
+    border-image: linear-gradient(180deg, rgba(135, 135, 135, 0.46) 0%, rgba(255, 255, 255, 0.5) 0%, rgba(0, 0, 0, 0) 100%) 10;
+    box-shadow: inset 0px 1px 10px 0px rgba(255, 255, 255, 0.3), inset 1px 0px 5px 0px rgba(0, 0, 0, 0.3), inset 0px 0px 5px 0px rgba(234, 234, 234, 0.3), inset 0px 1px 5px 0px rgba(0, 0, 0, 0.3);
+}
+
 .btn_Selcet_ {
     /* 自动布局子元素 */
     width: 330px;
@@ -126,10 +200,11 @@ export default defineComponent({
     height: 748px;
     /* 自动布局 */
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 80px 160px;
-    gap: 240px;
+    padding: 160px 160px 80px 160px;
+    gap: 48px;
     z-index: 0;
 }
 
@@ -198,6 +273,7 @@ export default defineComponent({
     padding: 0px;
     z-index: 0;
 }
+
 .btn_Selcet:active,
 .btn_back:active {
     transform: scale(0.95);

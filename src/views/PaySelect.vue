@@ -22,7 +22,7 @@
                             <img src="/PaySelect/text_needToPay.svg" />￥{{ price }}
                         </div>
                     </div>
-                    <img v-if="journeyWay === 2" src="/PaySelect/btn_UseCoupon.svg" @click="ClickToInputCoupon" class="btn_useCoupon" />
+                    <img v-if="journeyWay === 1" src="/PaySelect/btn_UseCoupon.svg" @click="ClickToInputCoupon" class="btn_useCoupon" />
                 </div>
                 <div class="payWay">
                     <div class="payWay_">
