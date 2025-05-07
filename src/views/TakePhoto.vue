@@ -186,8 +186,15 @@ export default defineComponent({
                 if (stream) {
                     stream.getTracks().forEach(track => track.stop());
                 }
+                const videoConstraints = {
+                    width: { ideal: 4096 }, // 优先选择4K分辨率
+                    height: { ideal: 2160 },
+                    advanced: [{ aspectRatio: 16 / 9 }] // 根据实际预览容器比例调整
+                };
 
-                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: videoConstraints
+                });
                 if (videoRef.value) {
                     videoRef.value.srcObject = stream;
                     // 确保视频元素可见
