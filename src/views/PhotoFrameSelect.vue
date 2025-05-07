@@ -19,7 +19,7 @@
                 <div class="PhotoFrameSelected">
                     <img src="/PhotoFrameSelect/Comp_FrameSelected.svg" alt="PhotoFrameSelected" />
                 </div>
-                <img src="/PhotoFrameSelect/btn_nextStep.svg" />
+                <img src="/PhotoFrameSelect/btn_nextStep.svg" class="btn" @click="ClickToNext"/>
             </div>
             <div class="toChooseArea"></div>
         </div>
@@ -45,8 +45,13 @@ export default defineComponent({
             const secs = timeLeft.value % 60;
             return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         });
-        const ClickToBack = () => {
-            router.back();
+        // const ClickToBack = () => {
+        //     router.back();
+        // };
+        const ClickToNext = () => {
+            router.push({
+                name:'EditPhotos'
+            });
         };
         // 启动定时器
         onMounted(() => {
@@ -54,7 +59,7 @@ export default defineComponent({
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
                 } else {
-                    router.back();
+                    // router.back();
                     clearInterval(timer);
                 }
             }, 1000);
@@ -67,7 +72,7 @@ export default defineComponent({
 
         const JourneyStore = useJourneyStore();
 
-        return { formattedTime, ClickToBack };
+        return { formattedTime ,ClickToNext};
     },
 });
 </script>
@@ -185,7 +190,10 @@ export default defineComponent({
     transform: scale(0.95);
     opacity: 0.8;
 }
-
+.btn:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+}
 .container {
     width: 1920px;
     height: 1080px;

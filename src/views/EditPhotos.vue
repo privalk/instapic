@@ -3,7 +3,7 @@
         <div class="header">
             <div class="btn_back">
             </div>
-            <img src="\EditPhotos\title_layout.svg" @click="captureHD" />
+            <img src="\EditPhotos\title_layout.svg" />
             <div class="time">
                 <div class="time2">
                     <div class="time3">
@@ -23,15 +23,15 @@
 
 
             </div>
-            <div class="middle">
+            <div class="middle" ref="middleElement">
                 <img src="\EditPhotos\Grid_4.png" class="PhotoFrame">
             </div>
             <div class="right">
-                <div class="right_top"></div>
+                <div class="right_top" ref="rightTopElement"></div>
                 <div class="right_bottom">
                     <div class="mod_Reselect">
                         <div class="mod_Reselect_">
-                            <img src="\EditPhotos\btn_ReselectFrame.png" class="btn" />
+                            <img src="\EditPhotos\btn_ReselectFrame.png" class="btn" @click="handleReselectFrame" />
                             <div class="text_Reselect">
                                 <img src="\EditPhotos\remindTimes.svg">
                                 <div class="text_Reselect_"> {{ remainAttempts_selectFrame }}</div>
@@ -40,7 +40,7 @@
                         </div>
 
                     </div>
-                    <img src="\EditPhotos\btn_comfirm.png" class="btn"/>
+                    <img src="\EditPhotos\btn_comfirm.png" class="btn" @click="handleConfirm" />
                 </div>
             </div>
         </div>
@@ -60,6 +60,9 @@ import interact from 'interactjs'
 export default defineComponent({
 
     setup() {
+        const JourneyStore = useJourneyStore();
+        const middleElement = ref<HTMLElement | null>(null)
+        const rightTopElement = ref<HTMLElement | null>(null)
         interface DraggableImage {
             src: string
             x: number
@@ -69,12 +72,17 @@ export default defineComponent({
             opacity: number
         }
 
-        // 响应式数据
-        const images: Ref<DraggableImage[]> = ref([
-            { src: '/1.jpg', x: 20, y: 0, scale: 1, rotate: 0, opacity: 1 },
-            { src: '/2.jpg', x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 },
-            // 添加更多图片...
-        ])
+        // 从JourneyStore获取photos并转换为DraggableImage数组
+        const images: Ref<DraggableImage[]> = ref(
+            JourneyStore.photos.map(photo => ({
+                src: photo,
+                x: 0,
+                y: 0,
+                scale: 1,
+                rotate: 0,
+                opacity: 1
+            }))
+        )
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_EditPhotos);
         let timer: number;
@@ -89,7 +97,7 @@ export default defineComponent({
         };
 
 
-        const JourneyStore = useJourneyStore();
+
         const remainAttempts_selectFrame = computed(() => JourneyStore.remainAttempts_selectFrame);
 
         const canvasContainer: Ref<HTMLElement | null> = ref(null)
@@ -118,6 +126,7 @@ export default defineComponent({
 
                 // 初始化交互
                 initInteract()
+                initImagePositions()
             })
         })
 
@@ -126,15 +135,37 @@ export default defineComponent({
             clearInterval(timer);
         });
         const initInteract = () => {
-
+            if (!canvasContainer.value || !middleElement.value || !rightTopElement.value) {
+                console.log(canvasContainer.value, middleElement.value, rightTopElement.value)
+                console.error('无法获取 DOM 元素');
+                return;
+            }
+            // 计算限制区域
+            const getAreaRect = (element: HTMLElement) => ({
+                left: element.offsetLeft + 130,
+                top: element.offsetTop + 171,
+                right: element.offsetLeft + element.offsetWidth + 80,
+                bottom: element.offsetTop + 145 + element.offsetHeight
+            })
+            const middleRect = getAreaRect(middleElement.value)
+            const rightTopRect = getAreaRect(rightTopElement.value)
+            console.log('中间区域:', middleRect)
+            console.log('右上区域:', rightTopRect)
+            const restriction = {
+                left: middleRect.left,
+                top: middleRect.top,
+                right: rightTopRect.right,
+                bottom: middleRect.bottom
+            }
+            console.log('限制区域:', restriction)
             interact('.draggable-image')
                 .draggable({
                     inertia: true,
                     modifiers: [
                         interact.modifiers.restrictRect({
-                            restriction: canvasContainer.value!,
+                            restriction: restriction,
                             endOnly: true,
-                        }),
+                        })
                     ],
                     listeners: {
                         move: handleDragMove,
@@ -152,7 +183,29 @@ export default defineComponent({
 
         }
 
+        // 自动排列初始化逻辑
+        const initImagePositions = () => {
+            const rightTop = rightTopElement.value
+            if (!rightTop) return
 
+            const areaWidth = rightTop.offsetWidth
+            // const areaHeight = rightTop.offsetHeight
+            const imgWidth = 200 // 与 CSS 中 draggable-image img 的宽度一致
+            const imgHeight = 200 // 根据实际图片比例调整
+
+            // 计算行列数和间距
+            const cols = Math.floor(areaWidth / imgWidth)
+            const horizontalGap = (areaWidth - cols * imgWidth) / (cols + 1)
+            const verticalGap = 20
+
+            images.value.forEach((img, index) => {
+                const row = Math.floor(index / cols)
+                const col = index % cols
+
+                img.x = rightTop.offsetLeft + horizontalGap * (col + 1) + imgWidth * col
+                img.y = rightTop.offsetTop + verticalGap * (row + 1) + imgHeight * row
+            })
+        }
         const handleGestureMove = (event: Interact.GestureEvent) => {
             const target = event.target as HTMLElement
             const index = Array.from(target.parentNode!.children).indexOf(target) - 1
@@ -173,6 +226,7 @@ export default defineComponent({
             images.value[index].y += event.dy
         }
         const captureHD = async () => {
+            console.log('开始截图')
             const frameElement = document.querySelector('.PhotoFrame') as HTMLImageElement;
             if (!frameElement) return;
 
@@ -182,7 +236,7 @@ export default defineComponent({
             canvas.width = frameOriginal.naturalWidth;
             canvas.height = frameOriginal.naturalHeight;
             const ctx = canvas.getContext('2d')!;
-            ctx.drawImage(frameOriginal, 0, 0);
+
 
             const frameDisplayRect = frameElement.getBoundingClientRect();
             const scaleX = frameOriginal.naturalWidth / frameDisplayRect.width;
@@ -233,11 +287,15 @@ export default defineComponent({
                     -originalImg.naturalHeight / 2
                 );
                 ctx.restore();
+                ctx.drawImage(frameOriginal, 0, 0);
             });
 
             canvas.toBlob(blob => {
                 if (blob) {
 
+                    JourneyStore.setCapturedPhoto(URL.createObjectURL(blob));
+                } else {
+                    console.error('Blob 创建失败');
                 }
             }, 'image/png', 1);
         };
@@ -257,10 +315,22 @@ export default defineComponent({
                 img.onerror = (e) => reject(e);
             });
         };
+        const handleReselectFrame = () => {
+            // 处理重新选择相框的逻辑
+            if (JourneyStore.remainAttempts_selectFrame > 0)
+                console.log('重新选择相框');
+            JourneyStore.decrementAttempt('selectFrame')
+            router.push('/SelectFrame')
+
+        };
+        const handleConfirm = () => {
+            // 处理确认的逻辑
+            console.log('确认选择');
+            captureHD()
+        };
 
 
-
-        return { formattedTime, ClickToBack, images, getImageStyle, canvasContainer, captureHD, remainAttempts_selectFrame };
+        return { formattedTime, ClickToBack, images, getImageStyle, canvasContainer, middleElement, rightTopElement, captureHD, remainAttempts_selectFrame, handleReselectFrame, handleConfirm };
     },
 });
 </script>
@@ -270,6 +340,7 @@ export default defineComponent({
     transform: scale(0.95);
     opacity: 0.8;
 }
+
 .text_Reselect_ {
     /* 自动布局子元素 */
     width: 12px;
@@ -334,19 +405,20 @@ export default defineComponent({
     padding: 0px;
     gap: 36px;
     z-index: 1;
+    /* pointer-events: auto; */
 }
 
 .PhotoFrame {
     /* 自动布局子元素 */
     width: 492px;
     height: 728px;
-
-    pointer-events: none;
+    /* 
+    pointer-events: none; */
 
 }
 
 .PhotoFrame img {
-    z-index: 1;
+    z-index: 3;
 }
 
 .draggable-image {
@@ -354,7 +426,7 @@ export default defineComponent({
     cursor: move;
     touch-action: none;
     user-select: none;
-    z-index: 1;
+    z-index: 2;
 }
 
 .draggable-image img {
@@ -375,7 +447,7 @@ export default defineComponent({
     padding: 24px;
     gap: 64px;
     z-index: 1;
-    pointer-events: none;
+
 }
 
 .middle {
@@ -391,7 +463,7 @@ export default defineComponent({
     gap: 24px;
     flex-grow: 1;
     align-self: stretch;
-    z-index: 1;
+    z-index: 3;
     pointer-events: none;
 }
 
@@ -408,8 +480,8 @@ export default defineComponent({
     gap: 34px;
     flex-grow: 1;
     align-self: stretch;
-    z-index: 1;
-    pointer-events: none;
+    z-index: 0;
+
 }
 
 .right_top {
@@ -426,6 +498,7 @@ export default defineComponent({
     align-content: center;
     flex-grow: 1;
     z-index: 0;
+    /* pointer-events: none; */
 }
 
 .btn_back {

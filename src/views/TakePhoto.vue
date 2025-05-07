@@ -239,9 +239,9 @@ export default defineComponent({
 
                 if (canvasRef.value) {
                     const ctx = canvasRef.value.getContext('2d')!;
-                    canvasRef.value.width = videoRef.value!.videoWidth;
-                    canvasRef.value.height = videoRef.value!.videoHeight;
-                    ctx.drawImage(image, 0, 0, canvasRef.value.width, canvasRef.value.height);
+                    canvasRef.value.width = 361;
+                    canvasRef.value.height = 538;
+                    ctx.drawImage(image, 0, 0, 361, 538);
                 }
 
                 // 直接添加到照片数组
@@ -262,7 +262,7 @@ export default defineComponent({
         };
         const handleRetake = () => {
             if (JourneyStore.remainAttempts_takePhotos > 0 && JourneyStore.photos.length > 0) {
-                JourneyStore.decrementAttempt();
+                JourneyStore.decrementAttempt('takePhotos'); // 减少尝试次数
                 JourneyStore.photos.pop(); // 删除最后一张照片
                 startCountdown();
             }
@@ -325,8 +325,8 @@ export default defineComponent({
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 361px;
+    height: 538px;
     object-fit: cover;
 
 }

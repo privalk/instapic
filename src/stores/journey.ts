@@ -38,10 +38,18 @@ export const useJourneyStore = defineStore('journey', {
             this.journeyWay = num;
             router.push({ name: 'PaySelect' });
         },
-        decrementAttempt() {  // 新增响应式修改方法
-            if (this.remainAttempts_takePhotos > 0) {
-                this.remainAttempts_takePhotos--;
+        decrementAttempt(type: string) {  // 新增响应式修改方法
+            if (type === 'takePhotos') {
+                if (this.remainAttempts_takePhotos > 0) {
+                    this.remainAttempts_takePhotos--;
+                }
             }
+            else if (type === 'selectFrame') {
+                if (this.remainAttempts_selectFrame > 0) {
+                    this.remainAttempts_selectFrame--;
+                }
+            }
+
         },
         setCapturedPhoto(base64Data: string) {
             this.capturedPhoto = base64Data
