@@ -12,10 +12,11 @@ export const useConfigStore = defineStore('config', {
         WaitTime_Pay: 120, // 支付等待时间
         WaitTime_PhotoFrameSelect: 120, // 选择相框等待时间
         WaitTime_BeautyFilter: 35, // 美颜滤镜等待时间
-        WaitTime_TakePhoto: 3, // 拍照等待时间
+        WaitTime_TakePhoto: 1, // 拍照等待时间
         WaitTime_EditPhotos: 120, // 编辑照片等待时间
         remainAttempts_takePhotos: 2, // 剩余拍摄次数
-        remainAttempts_selectFrame: 1,
+        remainAttempts_selectFrame: 1,//剩余重选边框次数
+        WaitTime_FilterSelect: 120, // 滤镜选择等待时间
 
     }),
     actions: {

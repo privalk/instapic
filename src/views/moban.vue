@@ -4,7 +4,7 @@
             <div class="btn_back" @click="ClickToBack">
                 <img src="/GridSelect/btn_Back.svg" alt="btn_back" width="74px" height="74px" />
             </div>
-            <img src="/GridSelect/title_GridSelect.svg"/>
+            <img src="/GridSelect/title_GridSelect.svg" />
             <div class="time">
                 <div class="time2">
                     <div class="time3">
@@ -30,7 +30,7 @@ import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
 
 export default defineComponent({
-   
+
     setup() {
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_GridSelect);
@@ -166,17 +166,14 @@ export default defineComponent({
 .body {
     /* 自动布局子元素 */
     width: 1750px;
-    height: 779px;
+    height: 50px;
     /* 自动布局 */
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 36px 0px;
-    gap: 48px;
-    flex-grow: 1;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 0px;
     align-self: stretch;
-    z-index: 1;
+    z-index: 2;
 }
 
 .footer {

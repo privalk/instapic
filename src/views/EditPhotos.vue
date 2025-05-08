@@ -92,9 +92,7 @@ export default defineComponent({
             const secs = timeLeft.value % 60;
             return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         });
-        const ClickToBack = () => {
-            router.back();
-        };
+    
 
 
 
@@ -112,7 +110,7 @@ export default defineComponent({
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
                 } else {
-                    router.back();
+                   
                     clearInterval(timer);
                 }
             }, 1000);
@@ -320,17 +318,22 @@ export default defineComponent({
             if (JourneyStore.remainAttempts_selectFrame > 0)
                 console.log('重新选择相框');
             JourneyStore.decrementAttempt('selectFrame')
-            router.push('/SelectFrame')
+            router.push({
+                name:'PhotoFrameSelect'
+            })
 
         };
         const handleConfirm = () => {
             // 处理确认的逻辑
             console.log('确认选择');
             captureHD()
+            router.push({
+                name: 'FilterSelect'
+            })
         };
 
 
-        return { formattedTime, ClickToBack, images, getImageStyle, canvasContainer, middleElement, rightTopElement, captureHD, remainAttempts_selectFrame, handleReselectFrame, handleConfirm };
+        return { formattedTime, images, getImageStyle, canvasContainer, middleElement, rightTopElement, captureHD, remainAttempts_selectFrame, handleReselectFrame, handleConfirm };
     },
 });
 </script>

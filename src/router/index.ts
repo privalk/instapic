@@ -54,6 +54,11 @@ const router = createRouter({
       name: 'EditPhotos',
       component: () => import('@/views/EditPhotos.vue'),
     },
+    {
+      path:'/FilterSelect',
+      name:'FilterSelect',
+      component: () => import('@/views/FilterSelect.vue'),
+    }
   ],
 })
 

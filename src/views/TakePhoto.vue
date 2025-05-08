@@ -269,7 +269,9 @@ export default defineComponent({
         };
         const handleConfirm = () => {
 
-            router.push('/PhotoFrameSelect');
+            router.push({
+                name:'PhotoFrameSelect'
+            });
 
         };
         // 新增canvas显示控制

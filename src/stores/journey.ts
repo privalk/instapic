@@ -16,6 +16,7 @@ export const useJourneyStore = defineStore('journey', {
         remainAttempts_takePhotos: 2 as number, // 剩余拍摄次数
         capturedPhoto: null as string | null,  // 存储单张照片的base64
         remainAttempts_selectFrame: 1 as number, // 剩余拍摄次数
+        filterPhoto: null as string | null, // 过滤后的照片
     }),
     actions: {
         init() {
@@ -53,11 +54,50 @@ export const useJourneyStore = defineStore('journey', {
         },
         setCapturedPhoto(base64Data: string) {
             this.capturedPhoto = base64Data
+            this.filterPhoto = base64Data
         },
         clearCapturedPhoto() {
             this.capturedPhoto = null
-        }
+        },
+        setFilter(filter: string) {
+            if (!this.capturedPhoto) {
+                console.error('No captured photo to apply filter to.');
+                return;
+            };
 
+            // 创建图片对象
+            const img = new Image();
+            img.src = this.capturedPhoto;
+
+            return new Promise((resolve) => {
+                img.onload = () => {
+                    // 创建canvas处理滤镜
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return;
+
+                    // 应用滤镜
+                    ctx.filter = filter;
+                    ctx.drawImage(img, 0, 0);
+
+                    // 将处理后的图片保存到store
+                    this.filterPhoto = canvas.toDataURL('image/png');
+                    this.downloadFilteredImage(this.filterPhoto);
+                    resolve(true);
+                };
+            });
+        },
+        downloadFilteredImage(dataUrl: string) {
+            const link = document.createElement('a');
+            link.download = `filtered_${Date.now()}.png`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
     }
 
 });
