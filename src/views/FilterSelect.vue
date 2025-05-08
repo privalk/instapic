@@ -22,7 +22,7 @@
             <div class="right">
                 <div class="right_">
                     <div v-for="filterKey in (Object.keys(filters) as FilterKey[])" :key="filterKey" class="btn_filter"
-                        @click="applyFilter(filterKey)">
+                        @click="applyFilter(filterKey)" :class="{ 'active': selectedFilterKey === filterKey }">
                         <div :class="`btn_filter_${filterKey}`"></div>
                     </div>
                 </div>
@@ -83,18 +83,25 @@ export default defineComponent({
             heibai: 'grayscale(100%)'
         });
         const activeFilter = ref('');
-    
+        const selectedFilterKey = ref<FilterKey | null>(null);
         const applyFilter = (filterKey: FilterKey) => {
-            activeFilter.value = filters.value[filterKey];
-
-            
+            if (selectedFilterKey.value === filterKey) {
+                // 第二次点击相同滤镜时取消
+                selectedFilterKey.value = null;
+                activeFilter.value = '';
+            } else {
+                // 应用新滤镜
+                selectedFilterKey.value = filterKey;
+                activeFilter.value = filters.value[filterKey];
+            }
         };
+
         const handleConfirm = () => {
             // 处理确认逻辑
             console.log('Selected filter:', activeFilter.value);
             JourneyStore.setFilter(activeFilter.value);
         };
-        return { formattedTime, filterPhoto, applyFilter, activeFilter, filters,handleConfirm };
+        return { formattedTime, filterPhoto, applyFilter, activeFilter, filters, handleConfirm, selectedFilterKey };
     },
 });
 </script>
@@ -220,6 +227,11 @@ export default defineComponent({
 .btn_filter:active {
     transform: scale(0.95);
     opacity: 0.8;
+}
+
+.btn_filter.active {
+    border-image: linear-gradient(180deg, #8945FF 0%, #8945FF 100%) 10;
+    box-shadow: 0 0 10px #8945FF;
 }
 
 .time3 {
