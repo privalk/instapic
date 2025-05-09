@@ -164,7 +164,7 @@ export default defineComponent({
         }
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_Paster);
-        let timer: number;
+       let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
             const mins = Math.floor(timeLeft.value / 60);

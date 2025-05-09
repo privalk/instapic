@@ -11,7 +11,7 @@ import TakePhoto from '@/views/TakePhoto.vue'
 import EditPhotos from '@/views/EditPhotos.vue'
 import FilterSelect from '@/views/FilterSelect.vue'
 import Paster from '@/views/Paster.vue'
-
+import PrintAndGet from '@/views/PrintAndGet.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -74,6 +74,11 @@ const router = createRouter({
       path: '/Paster',
       name: 'Paster',
       component: Paster
+    },
+    {
+      path: '/PrintAndGet',
+      name: 'PrintAndGet',
+      component: PrintAndGet
     }
   ],
 })

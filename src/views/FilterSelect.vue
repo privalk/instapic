@@ -46,7 +46,7 @@ export default defineComponent({
     setup() {
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_GridSelect);
-        let timer: number;
+       let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
             const mins = Math.floor(timeLeft.value / 60);

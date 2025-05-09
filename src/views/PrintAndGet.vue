@@ -1,10 +1,10 @@
 <template>
     <v-container fluid class="container">
         <div class="header">
-            <div class="btn_back" @click="ClickToBack">
+            <div class="btn_back">
                 <img src="/GridSelect/btn_Back.svg" alt="btn_back" width="74px" height="74px" />
             </div>
-            <img src="/GridSelect/title_GridSelect.svg" />
+            <img src="\PrintAndGet\title_printAndGet.svg" />
             <div class="time">
                 <div class="time2">
                     <div class="time3">
@@ -15,7 +15,12 @@
         </div>
 
         <div class="body">
+            <img src="\PrintAndGet\img_left.svg" class="left">
 
+        </img>
+            <img  src="\PrintAndGet\img_right.svg" class="right">
+
+            </img>
         </div>
         <div class="footer">
             <img src="/GridSelect/img_Footer.svg" />
@@ -33,8 +38,8 @@ export default defineComponent({
 
     setup() {
         const configStore = useConfigStore();
-        const timeLeft = ref(configStore.WaitTime_GridSelect);
-        let timer: number;
+        const timeLeft = ref(configStore.WaitTime_PrintAndGet);
+        let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
             const mins = Math.floor(timeLeft.value / 60);
@@ -69,6 +74,32 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.left {
+    /* 自动布局子元素 */
+    width: 544px;
+    height: 457px;
+    /* 自动布局 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0px;
+    gap: 64px;
+    z-index: 0;
+}
+
+.right {
+    /* 自动布局子元素 */
+    width: 506px;
+    height: 457px;
+    /* 自动布局 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0px;
+    gap: 64px;
+    z-index: 1;
+}
+
 .time3 {
     /* 自动布局子元素 */
     width: 174px;

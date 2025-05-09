@@ -19,6 +19,7 @@ export const useConfigStore = defineStore('config', {
         WaitTime_FilterSelect: 120, // 滤镜选择等待时间
         WaitTime_Paster: 120, // 贴纸等待时间
         overPrintPrice:10, // 额外打印价格
+        WaitTime_PrintAndGet: 120, // 打印和获取等待时间
 
     }),
     actions: {
