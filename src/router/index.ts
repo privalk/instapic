@@ -1,5 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
+import GridSelect from '@/views/GridSelect.vue'
+import WaySelect from '@/views/WaySelect.vue'
+import PaySelect from '@/views/PaySelect.vue'
+import InputCoupon from '@/views/InputCoupon.vue'
+import Pay from '@/views/Pay.vue'
+import PhotoFrameSelect from '@/views/PhotoFrameSelect.vue'
+import BeautyFilter from '@/views/BeautyFilter.vue'
+import TakePhoto from '@/views/TakePhoto.vue'
+import EditPhotos from '@/views/EditPhotos.vue'
+import FilterSelect from '@/views/FilterSelect.vue'
+import Paster from '@/views/Paster.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,52 +23,57 @@ const router = createRouter({
     {
       path: '/GridSelect',
       name: 'GridSelect',
-      component: () => import('@/views/GridSelect.vue'),
+      component: GridSelect
     },
     {
       path: '/WaySelect',
       name: 'WaySelect',
-      component: () => import('@/views/WaySelect.vue')
+      component: WaySelect
     },
     {
       path: '/PaySelect',
       name: 'PaySelect',
-      component: () => import('@/views/PaySelect.vue')
+      component: PaySelect
     },
     {
       path: '/InputCoupon',
       name: 'InputCoupon',
-      component: () => import('@/views/InputCoupon.vue')
+      component: InputCoupon
     },
     {
       path: '/Pay',
       name: 'Pay',
-      component: () => import('@/views/Pay.vue')
+      component: Pay
     },
     {
       path: '/PhotoFrameSelect',
       name: 'PhotoFrameSelect',
-      component: () => import('@/views/PhotoFrameSelect.vue'),
+      component: PhotoFrameSelect
     },
     {
       path: '/BeautyFilter',
       name: 'BeautyFilter',
-      component: () => import('@/views/BeautyFilter.vue'),
+      component: BeautyFilter
     },
     {
       path: '/TakePhoto',
       name: 'TakePhoto',
-      component: () => import('@/views/TakePhoto.vue'),
+      component: TakePhoto
     },
     {
       path: '/EditPhotos',
       name: 'EditPhotos',
-      component: () => import('@/views/EditPhotos.vue'),
+      component: EditPhotos
     },
     {
-      path:'/FilterSelect',
-      name:'FilterSelect',
-      component: () => import('@/views/FilterSelect.vue'),
+      path: '/FilterSelect',
+      name: 'FilterSelect',
+      component: FilterSelect
+    },
+    {
+      path: '/Paster',
+      name: 'Paster',
+      component: Paster
     }
   ],
 })

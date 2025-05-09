@@ -6,7 +6,7 @@ import { useConfigStore } from '@/stores/config'
 export const useJourneyStore = defineStore('journey', {
     state: () => ({
         config: useConfigStore(), // 引入配置文件
-        num_grid: 4 as number, // 宫格数量
+        num_grid: 1 as number, // 宫格数量
         journeyWay: 0 as number, // 体验方式 1:现场拍摄   2：上传 
         price: 35 as number, // 价格
         payWay: 0 as number, // 支付方式 1:支付宝 2:微信
@@ -17,9 +17,15 @@ export const useJourneyStore = defineStore('journey', {
         capturedPhoto: null as string | null,  // 存储单张照片的base64
         remainAttempts_selectFrame: 1 as number, // 剩余拍摄次数
         filterPhoto: null as string | null, // 过滤后的照片
+        PasterPhoto: null as string | null, // 贴纸后照片
+        PrintNum: 1 as number, // 打印数量
+        overPrintPrice: 10 as number, // 额外打印价格
+        overPrintPriceAllToPay: 0 as number, // 额外打印价格总计
     }),
+    
     actions: {
         init() {
+            
             if (this.config?.price !== undefined) {
                 this.price = this.config.price;
             }
@@ -29,8 +35,13 @@ export const useJourneyStore = defineStore('journey', {
             if (this.config?.remainAttempts_selectFrame !== undefined) {
                 this.remainAttempts_selectFrame = this.config.remainAttempts_selectFrame;
             }
+            if (this.config?.overPrintPrice !== undefined) {
+                this.overPrintPrice = this.config.overPrintPrice;
+            }
         },
-
+        // clearPhotos() {
+        //     this.photos = [];
+        // },
         Select_GridNum(num: number) {
             this.num_grid = num;
             router.push({ name: 'WaySelect' });
@@ -59,45 +70,84 @@ export const useJourneyStore = defineStore('journey', {
         clearCapturedPhoto() {
             this.capturedPhoto = null
         },
+        setPasterPhoto(base64Data: string) {
+            this.PasterPhoto = base64Data
+        },
+        clearPasterPhoto() {
+            this.PasterPhoto = null
+        },
         setFilter(filter: string) {
             if (!this.capturedPhoto) {
                 console.error('No captured photo to apply filter to.');
-                return;
+                return Promise.resolve(false);
             };
 
-            // 创建图片对象
-            const img = new Image();
-            img.src = this.capturedPhoto;
-
             return new Promise((resolve) => {
+                const img = new Image();
+                img.src = this.capturedPhoto!;
+
                 img.onload = () => {
-                    // 创建canvas处理滤镜
                     const canvas = document.createElement('canvas');
                     canvas.width = img.width;
                     canvas.height = img.height;
 
                     const ctx = canvas.getContext('2d');
-                    if (!ctx) return;
+                    if (!ctx) {
+                        resolve(false);
+                        return;
+                    }
 
                     // 应用滤镜
                     ctx.filter = filter;
                     ctx.drawImage(img, 0, 0);
 
-                    // 将处理后的图片保存到store
-                    this.filterPhoto = canvas.toDataURL('image/png');
-                    this.downloadFilteredImage(this.filterPhoto);
-                    resolve(true);
+                    // 转换为Blob
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            resolve(false);
+                            return;
+                        }
+
+                        // 生成Blob URL
+                        const blobURL = URL.createObjectURL(blob);
+
+                        // 更新存储的URL
+                        if (this.filterPhoto) {
+                            URL.revokeObjectURL(this.filterPhoto); // 释放之前的Blob URL
+                        }
+
+                        this.filterPhoto = blobURL;
+                        this.PasterPhoto = blobURL;
+                        // this.downloadFilteredImage(blobURL);
+                        resolve(true);
+                    }, 'image/png');
+                };
+
+                img.onerror = () => {
+                    console.error('Failed to load image');
+                    resolve(false);
                 };
             });
         },
-        downloadFilteredImage(dataUrl: string) {
+        downloadFilteredImage(blobURL: string) {
             const link = document.createElement('a');
             link.download = `filtered_${Date.now()}.png`;
-            link.href = dataUrl;
+            link.href = blobURL;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-          }
+        },
+        addPrintNum() {
+            this.PrintNum++;
+            this.overPrintPriceAllToPay = (this.PrintNum-1) * this.overPrintPrice;
+        },
+        minusPrintNum() {
+            if (this.PrintNum > 1) {
+                this.PrintNum--;
+                this.overPrintPriceAllToPay = (this.PrintNum-1) * this.overPrintPrice;
+            }
+        },
+
     }
 
 });

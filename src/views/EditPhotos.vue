@@ -246,11 +246,15 @@ export default defineComponent({
 
             images.value.forEach((imgData, index) => {
                 const originalImg = dragImgs[index];
-                if (!originalImg) return;
+                if (!originalImg||!canvasContainer.value) {
+                    console.log(originalImg,canvasContainer.value)
+                    console.error('无法获取原始图片或canvasContainer');
+                    return;
+                }
 
                 // 获取相框在容器内的相对位置
                 const frameRect = frameElement.getBoundingClientRect();
-                const containerRect = canvasContainer.value!.getBoundingClientRect();
+                const containerRect = canvasContainer.value.getBoundingClientRect();
                 const frameLeftInContainer = frameRect.left - containerRect.left;
                 const frameTopInContainer = frameRect.top - containerRect.top;
 
@@ -323,13 +327,13 @@ export default defineComponent({
             })
 
         };
-        const handleConfirm = () => {
+        const handleConfirm = async () => {
             // 处理确认的逻辑
             console.log('确认选择');
-            captureHD()
+            await captureHD();
             router.push({
                 name: 'FilterSelect'
-            })
+            });
         };
 
 

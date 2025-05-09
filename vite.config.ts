@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
-
+import vuetify from 'vite-plugin-vuetify'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -12,9 +12,12 @@ export default defineConfig({
     vueDevTools(),
     tailwindcss(),
     comlink(),
+    vuetify({
+      styles: { configFile: 'src/scss/vuetify.scss' } // 指定 SASS 配置文件
+    })
   ],
   worker: {
-    plugins: () => [comlink()]  
+    plugins: () => [comlink()]
   },
   server: {
     host: '0.0.0.0'

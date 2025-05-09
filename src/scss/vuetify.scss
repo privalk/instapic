@@ -1,0 +1,14 @@
+// 覆盖 Vuetify 变量
+@forward 'vuetify/settings' with (
+  $carousel-controls-color: #636363,   // 默认状态颜色（紫色）
+  $carousel-controls-bg: rgba(255, 255, 255, 0.3),
+  $carousel-dot-active-opacity: 1,
+  $carousel-dot-inactive-opacity: 0.5,
+  $carousel-controls-size: 24px,
+  $carousel-dot-margin: 0 8px
+);
+
+// 覆盖激活状态颜色（需要单独处理）
+.v-carousel__controls .v-btn--active {
+  --v-theme-on-surface-variant: #636363 !important; // 激活状态颜色（灰色）
+}

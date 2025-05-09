@@ -100,6 +100,9 @@ export default defineComponent({
             // 处理确认逻辑
             console.log('Selected filter:', activeFilter.value);
             JourneyStore.setFilter(activeFilter.value);
+            router.push({
+                name:'Paster'
+            });
         };
         return { formattedTime, filterPhoto, applyFilter, activeFilter, filters, handleConfirm, selectedFilterKey };
     },
