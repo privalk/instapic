@@ -68,11 +68,11 @@ import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
 
 export default defineComponent({
-   
+
     setup() {
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_GridSelect);
-       let timer: ReturnType<typeof setInterval>;
+        let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
             const mins = Math.floor(timeLeft.value / 60);
@@ -239,6 +239,7 @@ export default defineComponent({
     padding: 0px;
     z-index: 0;
 }
+
 .btn_GridType:active,
 .btn_back:active {
 

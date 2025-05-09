@@ -1,15 +1,10 @@
 import { app, BrowserWindow } from 'electron'
- 
+
 app.whenReady().then(() => {
-  const win = new BrowserWindow({
-    title: 'Main window',
-  })
- 
-  // 当调用“serve”命令时，可以使用“process.env.VITE_DEV_SERVER_URL”`
-  if (process.env.VITE_DEV_SERVER_URL) {
-    win.loadURL(process.env.VITE_DEV_SERVER_URL)
+  const win = new BrowserWindow({ width: 1920   , height: 1080 })
+  if (app.isPackaged) {
+    win.loadFile('dist/renderer/index.html') // 生产环境加载打包后的文件
   } else {
-    //默认地址
-    win.loadFile('dist/index.html');
+    win.loadURL('http://localhost:5173') // 开发环境连接到 Vite 服务
   }
 })

@@ -18,7 +18,7 @@
         <div class="body">
             <div class="QRcode">
                 <div class="QRcode_">
-                    <div class="QRcode__"></div>
+                    <div class="QRcode__" @click="handlePayed"></div>
                 </div>
             </div>
         </div>
@@ -67,8 +67,12 @@ export default defineComponent({
         });
 
         const JourneyStore = useJourneyStore();
-
-        return { formattedTime, ClickToBack, payWay: JourneyStore.payWay };
+        const handlePayed=() => {
+            router.push({
+                name: 'TakePhoto'
+            });
+        };
+        return { formattedTime, ClickToBack, payWay: JourneyStore.payWay ,handlePayed};
     },
 });
 </script>
