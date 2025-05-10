@@ -1,11 +1,33 @@
-import axios, { type AxiosInstance, type AxiosResponse } from "axios";
+import { createClient } from '@supabase/supabase-js';
+// 从环境变量读取配置
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPA_ANON_KEY;
+const email = import.meta.env.VITE_EMAIL;
+const password = import.meta.env.VITE_PASSWORD;
+// 初始化客户端
+const supabase = createClient(supabaseUrl, supabaseKey);
+async function login() {
+  // 调试输出环境变量
+  console.log('Env Variables:', { supabaseUrl, supabaseKey, email, password });
 
+  // 尝试登录
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-interface baseResponse {
-  code: number;
-  msg: string;
-  data: any;
+  if (error) {
+    console.error('登录失败:', error.message);
+    return;
+  }
+
+  console.log('登录成功:', data);
 }
+
+
+// 执行登录
+login();
+
 interface DeviceCreationResponse {
   output_id_device: string;
 }
@@ -24,7 +46,8 @@ interface JourneyCreationResponse {
   output_id_journey: string;
 }
 interface specificationResponse {
-
+  output_str_type: string;
+  output_str_value: string;
 }
 interface TrackingCreationResponse {
   output_id_tracking: string;
@@ -57,17 +80,9 @@ interface PromptUpdateResponse {
 
 // 封装类
 class PG0ExternalServerAPI {
-  private client: AxiosInstance;
 
-  constructor(baseURL: string) {
-    this.client = axios.create({
-      baseURL,
-      timeout: 10000, // 超时时间
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  }
+
+
 
 
   /**
@@ -75,265 +90,242 @@ class PG0ExternalServerAPI {
    * 
    */
   async DeviceCreation(
-    mac: string,
-    organization_name: string,
-    location_name: string,
-    device_name: string,
-    device_description: string
+    param_str_description: string,
+    param_str_location: string,
+    param_str_mac: string,
+    param_str_display_name: string,
+    param_str_organization: string
   ): Promise<DeviceCreationResponse[]> {
-    const response: AxiosResponse<DeviceCreationResponse[]> = await this.client.post(
-      "/client_device_creation",
-      {
-        mac,
-        organization_name,
-        location_name,
-        device_name,
-        device_description,
-      }
-    );
-    console.log(response.data);
-    return response.data;
+    // 使用正确的 RPC 调用方式
+    const { data, error } = await supabase.rpc('client_device_creation', {
+      param_str_description,
+      param_str_location,
+      param_str_mac,
+      param_str_display_name,
+      param_str_organization
+    });
+    console.log(param_str_description, param_str_location, param_str_mac, param_str_display_name, param_str_organization);
+    // 错误处理
+    if (error) {
+      throw new Error(`RPC call failed: ${error.message}`);
+    }
+
+    console.log('Created devices:', data);
+    return data as DeviceCreationResponse[];
   }
   /**
    * 通过 device_id和mac 申请分配计算/存储服务提供商
-   * @param device_id 设备ID
-   * @param mac
    */
   async ServiceInquiry(
-    device_id: string,
-    mac: string
+    param_id_device: string,
+    param_str_mac: string
   ): Promise<ServiceInquiryResponse[]> {
-    const response: AxiosResponse<ServiceInquiryResponse[]> = await this.client.post(
-      "/client_service_inquiry",
-      {
-        device_id,
-        mac,
-      }
-    );
-    console.log(response.data);
-    return response.data;
+    const { data, error } = await supabase.rpc('client_service_inquiry', {
+      param_id_device,
+      param_str_mac,
+    });
+
+    if (error) throw new Error(`Service inquiry failed: ${error.message}`);
+    return data as ServiceInquiryResponse[];
   }
 
-
-  async GoodIquiry(
-    device_id: string,
-    mac: string,
+  async GoodInquiry(
+    param_id_device: string,
+    param_str_mac: string,
   ): Promise<GoodInquiryResponse[]> {
-    const response: AxiosResponse<GoodInquiryResponse[]> = await this.client.post(
-      "/client_good_inquiry",
-      {
-        device_id,
-        mac,
-      }
-    );
-    console.log(response.data);
-    return response.data;
+    const { data, error } = await supabase.rpc('client_good_inquiry', {
+      param_id_device,
+      param_str_mac,
+    });
+
+    if (error) throw new Error(`Good inquiry failed: ${error.message}`);
+    return data as GoodInquiryResponse[];
   }
 
   /**
-   * 通过 device_id、mac、product_id 获取该商品的具体属性，返回specification list
+   * 获取商品具体属性
    */
   async SpecificationInquiry(
-    device_id: string,
-    mac: string,
-    product_id: string
+    param_id_device: string,
+    param_str_mac: string,
+    param_id_product: string
   ): Promise<specificationResponse[]> {
-    const response: AxiosResponse<specificationResponse[]> = await this.client.post(
-      "/client_specification_inquiry",
-      {
-        device_id,
-        mac,
-        product_id,
-      }
-    );
-    console.log(response.data);
-    return response.data;
+    const { data, error } = await supabase.rpc('client_specification_inquiry', {
+      param_id_device,
+      param_str_mac,
+      param_id_product,
+    });
+
+    if (error) throw new Error(`Spec inquiry failed: ${error.message}`);
+    return data as specificationResponse[];
   }
 
   /**
    * journey注册（开始游戏）
    */
   async JourneyCreation(
-    device_id: string,
-
+    param_id_device: string,
   ): Promise<JourneyCreationResponse[]> {
-    const response: AxiosResponse<JourneyCreationResponse[]> = await this.client.post(
-      "/client_journey_creation",
-      {
-        device_id,
-      }
-    );
-    console.log(response.data);
-    return response.data;
-  }
+    const { data, error } = await supabase.rpc('client_journey_creation', {
+      param_id_device,
+    });
 
+    if (error) throw new Error(`Journey creation failed: ${error.message}`);
+    return data as JourneyCreationResponse[];
+  }
 
   /**
    * 提交埋点记录
    */
   async TrackingCreation(
-    device_id: string,
-    journey_id: string,
-    event: string,
-    param: string,
-
+    param_id_device: string,
+    param_id_journey: string,
+    param_str_parameters: string,
+    param_str_event: string,
   ): Promise<TrackingCreationResponse[]> {
-    const response: AxiosResponse<TrackingCreationResponse[]> = await this.client.post(
-      "/client_tracking_creation",
-      {
-        device_id,
-        journey_id,
-        event,
-        param,
-      }
-    );
-    console.log(response.data);
-    return response.data;
+    const { data, error } = await supabase.rpc('client_tracking_creation', {
+      param_id_device,
+      param_id_journey,
+      param_str_parameters,
+      param_str_event,
+    });
+
+    if (error) throw new Error(`Tracking creation failed: ${error.message}`);
+    return data as TrackingCreationResponse[];
   }
+
   /**
-   *  提交order（商品订单）
+   * 提交商品订单
    */
   async OrderCreation(
-    order_name: string,
-    device_id: string,
-    journey_id: string,
-    json_items: {
+    param_str_order_name: string,
+    param_id_device: string,
+    param_id_journey: string,
+    param_json_items: {
       product_id: string;
       quantity: number;
     }[]
   ): Promise<OrderCreationResponse[]> {
-    const response: AxiosResponse<OrderCreationResponse[]> = await this.client.post(
-      "/client_order_creation",
-      {
-        order_name,
-        device_id,
-        journey_id,
-        json_items,
-      }
-    );
-    console.log(response.data);
-    return response.data;
+    const { data, error } = await supabase.rpc('client_order_creation', {
+      param_str_order_name,
+      param_id_device,
+      param_id_journey,
+      param_json_items,
+    });
+
+    if (error) throw new Error(`Order creation failed: ${error.message}`);
+    return data as OrderCreationResponse[];
   }
 
   /**
-   * 轮询用函数：通过order_id检查支付方式是否已经准备完成
+   * 轮询订单支付方式准备状态
    */
   async OrderPolling(
-    order_id: string,
+    param_id_order: string,
   ): Promise<OrderPollingResponse[]> {
-    const response: AxiosResponse<OrderPollingResponse[]> = await this.client.post(
-      "/client_order_polling",
-      {
-        order_id,
-      }
-    );
-    console.log(response.data);
-    return response.data;
+    const { data, error } = await supabase.rpc('client_order_polling', {
+      param_id_order,
+    });
+
+    if (error) throw new Error(`Order polling failed: ${error.message}`);
+    return data as OrderPollingResponse[];
   }
 
   /**
-   * 通过order_id查询order的支付方式（payments）（返回内容为复数）
+   * 查询订单支付方式
    */
   async PaymentInquiry(
-    order_id: string,
+    param_id_order: string,
   ): Promise<PaymentInquiryResponse[]> {
-    const response: AxiosResponse<PaymentInquiryResponse[]> = await this.client.post(
-      "/client_payment_inquiry",
-      {
-        order_id,
-      }
-    );
-    console.log(response.data);
-    return response.data;
+    const { data, error } = await supabase.rpc('client_payment_inquiry', {
+      param_id_order,
+    });
+
+    if (error) throw new Error(`Payment inquiry failed: ${error.message}`);
+    return data as PaymentInquiryResponse[];
   }
 
   /** 
-   * 轮询用函数：通过order_id检查是否已经支付
+   * 轮询支付完成状态
    */
   async PaymentPolling(
-    order_id: string,
+    param_id_order: string,
   ): Promise<PaymentPollingResponse[]> {
-    const response: AxiosResponse<PaymentPollingResponse[]> = await this.client.post(
-      "/client_payment_polling",
-      {
-        order_id,
-      }
-    );
-    console.log(response.data);
-    return response.data;
+    const { data, error } = await supabase.rpc('client_payment_polling', {
+      param_id_order,
+    });
+
+    if (error) throw new Error(`Payment polling failed: ${error.message}`);
+    return data as PaymentPollingResponse[];
   }
 
   /**
-   * 应用代金券到订单并创建折后订单
+   * 应用代金券
    */
   async CouponApplyToOrder(
-    order_id: string,
-    coupon_code: string,
+    param_id_order: string,
+    param_id_device: string,
+    param_str_use_code: string,
   ): Promise<CouponApplyToOrderResponse[]> {
-    const response: AxiosResponse<CouponApplyToOrderResponse[]> = await this.client.post(
-      "/client_coupon_apply_to_order",
-      {
-        order_id,
-        coupon_code,
-      }
-    );
-    console.log(response.data);
-    return response.data;
+    const { data, error } = await supabase.rpc('client_coupon_apply_to_order', {
+      param_id_order,
+      param_id_device,
+      param_str_use_code,
+    });
+
+    if (error) throw new Error(`Coupon apply failed: ${error.message}`);
+    return data as CouponApplyToOrderResponse[];
   }
 
   /**
    * 提交生成请求prompt
    */
   async PromptCreation(
-    device_id: string,
-    journey_id: string,
-    service_id: string,
-    param: string,
+    param_id_service: string,
+    param_id_device: string,
+    param_id_journey: string,
+    param_str_parameters: string,
   ): Promise<PromptCreationResponse[]> {
-    const response: AxiosResponse<PromptCreationResponse[]> = await this.client.post(
-      "/client_prompt_creation",
-      {
-        device_id,
-        journey_id,
-        service_id,
-        param,
-      }
-    );
-    console.log(response.data);
-    return response.data;
+    const { data, error } = await supabase.rpc('client_prompt_creation', {
+      param_id_service,
+      param_id_device,
+      param_id_journey,
+      param_str_parameters,
+    });
+
+    if (error) throw new Error(`Prompt creation failed: ${error.message}`);
+    return data as PromptCreationResponse[];
   }
 
   /**
-   * 更新上传请求prompt里购买个数（返回内容为复数）
-   * 
+   * 更新prompt购买个数
    */
   async PromptUpdate(
-    device_id: string,
-    journey_id: string,
     param_id_order: string,
+    param_id_device: string,
+    param_id_journey: string,
     param_str_mac: string,
     param_json_items: {
       product_id: string;
       quantity: number;
     }[]
   ): Promise<PromptUpdateResponse[]> {
-    const response: AxiosResponse<PromptUpdateResponse[]> = await this.client.post(
-      "/client_prompt_update",
-      {
-        device_id,
-        journey_id,
-        param_id_order,
-        param_str_mac,
-        param_json_items
-      }
-    );
-    console.log(response.data);
-    return response.data;
-  }
+    const { data, error } = await supabase.rpc('client_prompt_update', {
+      param_id_order,
+      param_id_device,
+      param_id_journey,
+      param_str_mac,
+      param_json_items
+    });
 
+    if (error) throw new Error(`Prompt update failed: ${error.message}`);
+    return data as PromptUpdateResponse[];
+  }
 }
 
-const api_server = import.meta.env.VITE_API_SERVER;
-export default PG0ExternalServerAPI;
-export const PG0ExternalServerApi = new PG0ExternalServerAPI(api_server);
+
+
+export const PG0ExternalServerApi = new PG0ExternalServerAPI();
+// 登录用户
+
 

@@ -7,16 +7,33 @@
 </template>
 
 <script lang="ts">
+
 import router from '@/router';
-import { defineComponent } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { useJourneyStore } from '@/stores/journey';
+import { defineComponent, onMounted } from 'vue';
 
 
 export default defineComponent({
-   
+
     setup() {
-        const ClickToStart = () => {
+        const authStore = useAuthStore();
+        const journeyStore = useJourneyStore();
+        const ClickToStart = async () => {
+            journeyStore.init()
+            await journeyStore.JourneyCreation();
+
             router.push({ name: 'GridSelect' });
+
         };
+
+        onMounted(async () => {
+            await authStore.DeviceCreation();
+            await authStore.ServiceInquiry();
+            await authStore.GoodInquiry();
+            await authStore.SpecificationInquiry();
+
+        });
         return { ClickToStart };
     },
 });

@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
 import vuetify from 'vite-plugin-vuetify'
-import electron from 'vite-plugin-electron'
+import electron from 'vite-plugin-electron/simple'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -17,7 +17,12 @@ export default defineConfig({
       styles: { configFile: 'src/scss/vuetify.scss' } // 指定 SASS 配置文件
     }),
     electron({
-      entry: 'electron/main.ts',
+      main: {
+        entry: 'electron/main.ts',
+      },
+      preload: {
+        input: 'electron/preload.ts',
+      },
     }),
   ],
   worker: {

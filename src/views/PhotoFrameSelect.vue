@@ -17,28 +17,33 @@
         <div class="body">
             <div class="choosedArea">
                 <div class="PhotoFrameSelected">
-                    <img src="/PhotoFrameSelect/Comp_FrameSelected.svg" alt="PhotoFrameSelected" />
+                    <img :src="selectedFrame" alt="PhotoFrameSelected" class="selected-frame" />
                 </div>
-                <img src="/PhotoFrameSelect/btn_nextStep.svg" class="btn" @click="ClickToNext"/>
+                <img src="/PhotoFrameSelect/btn_nextStep.svg" class="btn" @click="ClickToNext" />
             </div>
-            <div class="toChooseArea"></div>
+            <div class="toChooseArea">
+                <div v-for="(frame, index) in frameList" :key="index" class="frame-item" @click="selectFrame(frame)">
+                    <img :src="frame" alt="frame" class="frame-image" />
+                </div>
+            </div>
         </div>
 
     </v-container>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted, computed } from 'vue';
+import { defineComponent, ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
+import { useAuthStore } from '@/stores/auth';
 
 export default defineComponent({
-   
+
     setup() {
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_PhotoFrameSelect);
-       let timer: ReturnType<typeof setInterval>;
+        let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
             const mins = Math.floor(timeLeft.value / 60);
@@ -50,7 +55,7 @@ export default defineComponent({
         // };
         const ClickToNext = () => {
             router.push({
-                name:'EditPhotos'
+                name: 'EditPhotos'
             });
         };
         // 启动定时器
@@ -70,9 +75,38 @@ export default defineComponent({
             clearInterval(timer);
         });
 
-        const JourneyStore = useJourneyStore();
+        const journeyStore = useJourneyStore();
+        const authStore = useAuthStore();
+        const selectedFrame = ref<string>('');
+        const frameList = computed(() => {
+            const frameTypeMap: Record<number, string[]> = {
+                1: authStore.Instapic_FrameType_01,
+                2: authStore.Instapic_FrameType_02,
+                4: authStore.Instapic_FrameType_04,
+                6: authStore.Instapic_FrameType_06,
+                8: authStore.Instapic_FrameType_08,
+            };
+            return frameTypeMap[journeyStore.num_grid] || [];
+        });
+        const selectFrame = (frameUrl: string) => {
+            selectedFrame.value = frameUrl;
+            journeyStore.selectedFrameUrl = frameUrl; // 存储到store
+        };
+        watch(
+            () => frameList.value,
+            (newList) => {
+                if (newList.length > 0 && !selectedFrame.value) {
+                    selectFrame(newList[0]);
+                }
+            },
+            { immediate: true }
+        );
 
-        return { formattedTime ,ClickToNext};
+        return {
+            formattedTime, ClickToNext, frameList,
+            selectedFrame,
+            selectFrame
+        };
     },
 });
 </script>
@@ -84,14 +118,41 @@ export default defineComponent({
     height: 829px;
     /* 自动布局 */
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 24px;
-    gap: 24px 54px;
     flex-wrap: wrap;
-    align-content: center;
-    align-self: stretch;
-    z-index: 1;
+    gap: 20px;
+    overflow-y: auto;
+    max-height: 700px;
+    padding: 20px;
+    justify-content: flex-start;
+}
+
+.frame-item {
+    width: 226px;
+    height: 336px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.frame-item:hover {
+    transform: scale(1.05);
+}
+
+.frame-image {
+    width: 226px;
+    height: 336px;
+    object-fit: contain;
+    /* border-radius: 10px; */
+    background: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.selected-frame {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #fff;
+
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 .PhotoFrameSelected {
@@ -190,10 +251,12 @@ export default defineComponent({
     transform: scale(0.95);
     opacity: 0.8;
 }
+
 .btn:active {
     transform: scale(0.95);
     opacity: 0.8;
 }
+
 .container {
     width: 1920px;
     height: 1080px;

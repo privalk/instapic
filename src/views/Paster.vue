@@ -33,7 +33,7 @@
                             <div class="text">{{ PrintNum }}</div>
                             <img src="\Paster\btn_plus.svg" class="btn" @click="addPrintNum" />
                         </div>
-                        <img src="\Paster\btn_Print.png" class="btn" @click="captureHD" />
+                        <img src="\Paster\btn_Print.png" class="btn" @click="printImage" />
                     </div>
                     <div class="overPrintBottom">
                         <img src="\Paster\text_moreToPay.svg" />
@@ -76,10 +76,21 @@ import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
 import interact from 'interactjs';
+import { useAuthStore } from '@/stores/auth';
 
 export default defineComponent({
 
     setup() {
+        const authStore = useAuthStore();
+        const journeyStore = useJourneyStore();
+        // 根据num_grid动态选择贴纸库
+        const pasters = computed<string[]>(() => {
+            const grid = journeyStore.num_grid;
+            // Store 中的 key 是 Instapic_Paster_01、_02、_04、_06、_08
+            const key = `Instapic_Paster_${String(grid).padStart(2, '0')}` as keyof typeof authStore;
+            // 如果不存在对应属性，就返回空数组
+            return Array.isArray(authStore[key]) ? (authStore[key] as string[]) : [];
+        });
         const PAGE_SIZE = 16;  // 每页贴纸数量
         const COLUMNS_PER_ROW = 4; // 每行列数
         interface Sticker {
@@ -92,9 +103,7 @@ export default defineComponent({
         }
 
         const stickers = ref<Sticker[]>([]);
-        const pasters = Array.from({ length: 16 }, (_, i) =>
-            `/Paster/Vintage1${i > 0 ? ` (${i})` : ''}.png`
-        );
+
         const getStickerStyle = (sticker: Sticker) => ({
             left: `${sticker.x}px`,
             top: `${sticker.y}px`,
@@ -164,7 +173,7 @@ export default defineComponent({
         }
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_Paster);
-       let timer: ReturnType<typeof setInterval>;
+        let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
             const mins = Math.floor(timeLeft.value / 60);
@@ -184,6 +193,7 @@ export default defineComponent({
                     clearInterval(timer);
                 }
             }, 1000);
+
         });
 
         // 清除定时器
@@ -191,15 +201,15 @@ export default defineComponent({
             clearInterval(timer);
         });
 
-        const JourneyStore = useJourneyStore();
+
         const pasterPreviewUrl = computed(() => {
-            return JourneyStore.PasterPhoto;
+            return journeyStore.PasterPhoto;
         });
         const PrintNum = computed(() => {
-            return JourneyStore.PrintNum;
+            return journeyStore.PrintNum;
         });
         const overPrintPriceAllToPay = computed(() => {
-            return JourneyStore.overPrintPriceAllToPay;
+            return journeyStore.overPrintPriceAllToPay;
         });
 
         // 双击检测逻辑
@@ -224,64 +234,74 @@ export default defineComponent({
 
 
         const captureHD = async () => {
-            try {
-                // 找到用于截图的预览图元素
-                const frameElement = document.querySelector('.pasterPreview img') as HTMLImageElement;
-                if (!frameElement) return;
+            if (stickers.value.length > 0) {
+                try {
 
-                // 加载原始高清图
-                const frameOriginal = await loadImage(frameElement.src);
+                    // 找到用于截图的预览图元素
+                    const frameElement = document.querySelector('.pasterPreview img') as HTMLImageElement;
+                    if (!frameElement) return;
 
-                // 创建画布，尺寸用高清图的 naturalWidth/naturalHeight
-                const canvas = document.createElement('canvas');
-                canvas.width = frameOriginal.naturalWidth;
-                canvas.height = frameOriginal.naturalHeight;
-                const ctx = canvas.getContext('2d')!;
+                    // 加载原始高清图
+                    const frameOriginal = await loadImage(frameElement.src);
 
-                // 先把背景图画上去
-                ctx.drawImage(frameOriginal, 0, 0);
+                    // 创建画布，尺寸用高清图的 naturalWidth/naturalHeight
+                    const canvas = document.createElement('canvas');
+                    canvas.width = frameOriginal.naturalWidth;
+                    canvas.height = frameOriginal.naturalHeight;
+                    const ctx = canvas.getContext('2d')!;
 
-                // 拿到预览图和贴纸元素在页面上的真实位置
-                const frameRect = frameElement.getBoundingClientRect();
-                const stickerElements = Array.from(document.querySelectorAll('.draggable-sticker')) as HTMLElement[];
+                    // 先把背景图画上去
+                    ctx.drawImage(frameOriginal, 0, 0);
 
-                // 计算从预览尺寸到高清画布的缩放
-                const scaleX = canvas.width / frameRect.width;
-                const scaleY = canvas.height / frameRect.height;
+                    // 拿到预览图和贴纸元素在页面上的真实位置
+                    const frameRect = frameElement.getBoundingClientRect();
+                    const stickerElements = Array.from(document.querySelectorAll('.draggable-sticker')) as HTMLElement[];
 
-                // 遍历每个贴纸
-                for (let i = 0; i < stickers.value.length; i++) {
-                    const sticker = stickers.value[i];
-                    const el = stickerElements[i];
-                    const img = await loadImage(sticker.src);
-                    const rect = el.getBoundingClientRect();
-                    const offsetX = rect.left - frameRect.left;
-                    const offsetY = rect.top - frameRect.top;
+                    // 计算从预览尺寸到高清画布的缩放
+                    const scaleX = canvas.width / frameRect.width;
+                    const scaleY = canvas.height / frameRect.height;
 
-                    // 只用 DOM rect 的宽高来做尺寸，再乘以画布缩放
-                    const w = rect.width * scaleX;
-                    const h = rect.height * scaleY;
-                    const canvasX = offsetX * scaleX;
-                    const canvasY = offsetY * scaleY;
+                    // 遍历每个贴纸
+                    for (let i = 0; i < stickers.value.length; i++) {
+                        const sticker = stickers.value[i];
+                        const el = stickerElements[i];
+                        const img = await loadImage(sticker.src);
+                        const rect = el.getBoundingClientRect();
+                        const offsetX = rect.left - frameRect.left;
+                        const offsetY = rect.top - frameRect.top;
 
-                    ctx.save();
-                    // 平移到贴纸中心
-                    ctx.translate(canvasX + w / 2, canvasY + h / 2);
-                    // 旋转
-                    ctx.rotate((sticker.rotate * Math.PI) / 180);
-                    // drawImage 的最后两个参数是绘制尺寸
-                    ctx.drawImage(img, -w / 2, -h / 2, w, h);
-                    ctx.restore();
-                }
-                // 导出 PNG 并存到 store
-                canvas.toBlob(blob => {
-                    if (blob) {
-                        JourneyStore.setPasterPhoto(URL.createObjectURL(blob));
+                        // 只用 DOM rect 的宽高来做尺寸，再乘以画布缩放
+                        const w = rect.width * scaleX;
+                        const h = rect.height * scaleY;
+                        const canvasX = offsetX * scaleX;
+                        const canvasY = offsetY * scaleY;
+
+                        ctx.save();
+                        // 平移到贴纸中心
+                        ctx.translate(canvasX + w / 2, canvasY + h / 2);
+                        // 旋转
+                        ctx.rotate((sticker.rotate * Math.PI) / 180);
+                        // drawImage 的最后两个参数是绘制尺寸
+                        ctx.drawImage(img, -w / 2, -h / 2, w, h);
+                        ctx.restore();
                     }
-                }, 'image/png', 1);
 
-            } catch (error) {
-                console.error('截图失败:', error);
+                    // 将 toBlob 包装为 Promise
+                    await new Promise<void>((resolve, reject) => {
+                        canvas.toBlob(blob => {
+                            if (blob) {
+                                journeyStore.setPasterPhotoBlob(blob);
+                                journeyStore.setPasterPhoto(URL.createObjectURL(blob));
+                                console.log('保存贴纸图片成功');
+                                resolve();
+                            } else {
+                                reject(new Error('Failed to generate blob'));
+                            }
+                        }, 'image/png', 1);
+                    });
+                } catch (error) {
+                    console.error('截图失败:', error);
+                }
             }
         };
 
@@ -290,6 +310,7 @@ export default defineComponent({
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.decoding = 'async'; // 启用异步解码
+                img.crossOrigin = 'anonymous'; // 确保跨域配置
                 img.src = src;
 
                 img.onload = () => {
@@ -305,7 +326,7 @@ export default defineComponent({
 
         // 修改分页逻辑
         const stickerPages = computed(() => {
-            return chunkArray(pasters, PAGE_SIZE);
+            return chunkArray(pasters.value, PAGE_SIZE);
         });
 
         // 优化分块方法
@@ -318,18 +339,44 @@ export default defineComponent({
         }
 
 
+
+        // 打印执行
+        const handleprintImage = async () => {
+            await captureHD();
+            router.push({ name: 'PrintAndGet' });
+            // try {
+            //     const pasterBlob = computed(() => JourneyStore.PasterPhotoBlob).value;
+            //     if (!pasterBlob) {
+            //         console.error('没有可打印的图片');
+            //         return;
+            //     }
+
+            //     const arrayBuffer = await pasterBlob.arrayBuffer();
+            //     console.log('打印数据:', arrayBuffer);
+            //     const success = await window.electronPrint.printImage({
+            //         buffer: arrayBuffer,
+            //         printerName: 'Microsoft Print to PDF',
+            //         copy:1,
+            //     })
+            //     console.log('打印结果:', success);
+            //     console.log(success ? '打印任务已发送' : '打印失败')
+            // } catch (err) {
+            //     console.error('打印错误:', err)
+            // }
+        }
         return {
             formattedTime,
             ClickToBack,
             pasterPreviewUrl,
-            PrintNum, addPrintNum: JourneyStore.addPrintNum,
-            minusPrintNum: JourneyStore.minusPrintNum,
+            PrintNum, addPrintNum: journeyStore.addPrintNum,
+            minusPrintNum: journeyStore.minusPrintNum,
             overPrintPriceAllToPay,
             stickers, pasters, addSticker, removeSticker, getStickerStyle,
             handleTouchStart, handleTouchEnd,
 
             captureHD,
             stickerPages, chunkArray,
+            printImage: handleprintImage,
 
         };
     },

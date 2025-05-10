@@ -24,7 +24,7 @@
 
             </div>
             <div class="middle" ref="middleElement">
-                <img src="\EditPhotos\Grid_4.png" class="PhotoFrame">
+                <img :src=framePhotoUrl class="PhotoFrame">
             </div>
             <div class="right">
                 <div class="right_top" ref="rightTopElement"></div>
@@ -63,6 +63,7 @@ export default defineComponent({
         const JourneyStore = useJourneyStore();
         const middleElement = ref<HTMLElement | null>(null)
         const rightTopElement = ref<HTMLElement | null>(null)
+        const framePhotoUrl = computed(() => JourneyStore.selectedFrameUrl)
         interface DraggableImage {
             src: string
             x: number
@@ -85,14 +86,14 @@ export default defineComponent({
         )
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_EditPhotos);
-       let timer: ReturnType<typeof setInterval>;
+        let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
             const mins = Math.floor(timeLeft.value / 60);
             const secs = timeLeft.value % 60;
             return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         });
-    
+
 
 
 
@@ -110,7 +111,7 @@ export default defineComponent({
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
                 } else {
-                   
+
                     clearInterval(timer);
                 }
             }, 1000);
@@ -246,8 +247,8 @@ export default defineComponent({
 
             images.value.forEach((imgData, index) => {
                 const originalImg = dragImgs[index];
-                if (!originalImg||!canvasContainer.value) {
-                    console.log(originalImg,canvasContainer.value)
+                if (!originalImg || !canvasContainer.value) {
+                    console.log(originalImg, canvasContainer.value)
                     console.error('无法获取原始图片或canvasContainer');
                     return;
                 }
@@ -305,6 +306,7 @@ export default defineComponent({
         const loadImage = (src: string): Promise<HTMLImageElement> => {
             return new Promise((resolve, reject) => {
                 const img = new Image();
+                img.crossOrigin = 'anonymous'; // 添加 CORS 属性
                 img.decoding = 'async'; // 启用异步解码
                 img.src = src;
 
@@ -323,7 +325,7 @@ export default defineComponent({
                 console.log('重新选择相框');
             JourneyStore.decrementAttempt('selectFrame')
             router.push({
-                name:'PhotoFrameSelect'
+                name: 'PhotoFrameSelect'
             })
 
         };
@@ -337,7 +339,7 @@ export default defineComponent({
         };
 
 
-        return { formattedTime, images, getImageStyle, canvasContainer, middleElement, rightTopElement, captureHD, remainAttempts_selectFrame, handleReselectFrame, handleConfirm };
+        return { formattedTime, images, getImageStyle, canvasContainer, middleElement, rightTopElement, captureHD, remainAttempts_selectFrame, handleReselectFrame, handleConfirm, framePhotoUrl };
     },
 });
 </script>

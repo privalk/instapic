@@ -22,17 +22,18 @@
                             <img src="/PaySelect/text_needToPay.svg" />￥{{ price }}
                         </div>
                     </div>
-                    <img v-if="journeyWay === 1" src="/PaySelect/btn_UseCoupon.svg" @click="ClickToInputCoupon" class="btn_useCoupon" />
+                    <img v-if="journeyWay === 1" src="/PaySelect/btn_UseCoupon.svg" @click="ClickToInputCoupon"
+                        class="btn_useCoupon" />
                 </div>
                 <div class="payWay">
                     <div class="payWay_">
-                        <div class="btn_payWay" @click="ClickToSelectPayWayToPay(1)">
+                        <div class="btn_payWay" @click="ClickToSelectPayWayToPay('微信支付')">
                             <div class="btn_payWay_">
                                 <img src="/PaySelect/img_wechat.svg" />
                                 <img src="/PaySelect/text_wechat.svg" />
                             </div>
                         </div>
-                        <div class="btn_payWay" @click="ClickToSelectPayWayToPay(2)">
+                        <div class="btn_payWay" @click="ClickToSelectPayWayToPay('支付宝')">
                             <div class="btn_payWay_">
                                 <img src="/PaySelect/img_alipay.svg" />
                                 <img src="/PaySelect/text_alipay.svg" />
@@ -46,6 +47,11 @@
         <div class="footer">
             <img src="/GridSelect/img_Footer.svg" />
         </div>
+
+        <v-overlay :model-value="isLoading" persistent :value="isLoading" absolute
+            class="d-flex justify-center align-center">
+            <v-progress-circular indeterminate size="64"></v-progress-circular>
+        </v-overlay>
     </v-container>
 </template>
 
@@ -56,10 +62,11 @@ import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
 
 export default defineComponent({
-   
+
     setup() {
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_PaySelect);
+        const journeyStore = useJourneyStore();
         let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
@@ -75,14 +82,23 @@ export default defineComponent({
                 name: 'InputCoupon'
             });
         };
-        const ClickToSelectPayWayToPay = (num:number) => {
-            JourneyStore.payWay=num;
+        const ClickToSelectPayWayToPay = (way: string) => {
+            journeyStore.payWay = way;
             router.push({
                 name: 'Pay'
             });
         };
+        const isLoading = ref(false);
         // 启动定时器
-        onMounted(() => {
+        onMounted(async () => {
+            isLoading.value = true;
+            try {
+                await journeyStore.OrderCreation(false);
+
+            } finally {
+                isLoading.value = false;
+            }
+
             timer = setInterval(() => {
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
@@ -97,10 +113,9 @@ export default defineComponent({
         onUnmounted(() => {
             clearInterval(timer);
         });
-
-        const JourneyStore = useJourneyStore();
-        const price = JourneyStore.price;
-        return { formattedTime, ClickToBack, journeyWay: JourneyStore.journeyWay, price,ClickToInputCoupon,ClickToSelectPayWayToPay};
+        const price = computed(() => (journeyStore.price / 100).toFixed(2));
+        const journeyWay = computed(() => journeyStore.journeyWay);
+        return { formattedTime, ClickToBack, journeyWay, price, ClickToInputCoupon, ClickToSelectPayWayToPay, isLoading };
     },
 });
 </script>
@@ -294,8 +309,9 @@ export default defineComponent({
     padding: 0px;
     z-index: 0;
 }
+
 .btn_useCoupon:active,
-.btn_payWay:active, 
+.btn_payWay:active,
 .btn_back:active {
     transform: scale(0.95);
     opacity: 0.8;

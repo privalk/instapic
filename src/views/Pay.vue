@@ -4,8 +4,8 @@
             <div class="btn_back" @click="ClickToBack">
                 <img src="/GridSelect/btn_Back.svg" alt="btn_back" width="74px" height="74px" />
             </div>
-            <img v-if="payWay === 1" src="/Pay/title_wechatPay.svg" />
-            <img v-if="payWay === 2" src="/Pay/title_aliPay.svg" />
+            <img v-if="payWay === '微信支付'" src="/Pay/title_wechatPay.svg" />
+            <img v-if="payWay === '支付宝'" src="/Pay/title_aliPay.svg" />
             <div class="time">
                 <div class="time2">
                     <div class="time3">
@@ -18,7 +18,15 @@
         <div class="body">
             <div class="QRcode">
                 <div class="QRcode_">
-                    <div class="QRcode__" @click="handlePayed"></div>
+                    <div class="QRcode__">
+                        <template v-if="currentPayment">
+                            <qrcode-vue :value="currentPayment.output_str_method" :size="350" level="H"
+                                background="#ffffff" foreground="#000000" />
+                        </template>
+                        <div v-else class="loading">
+                            正在加载支付信息...
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -33,13 +41,17 @@ import { defineComponent, ref, onMounted, onUnmounted, computed } from 'vue';
 import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
+import QrcodeVue from 'qrcode.vue'
 
 export default defineComponent({
-   
+    components: {
+        QrcodeVue
+    },
     setup() {
+        const journeyStore = useJourneyStore();
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_Pay);
-       let timer: ReturnType<typeof setInterval>;
+        let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
             const mins = Math.floor(timeLeft.value / 60);
@@ -50,7 +62,7 @@ export default defineComponent({
             router.back();
         };
         // 启动定时器
-        onMounted(() => {
+        onMounted(async () => {
             timer = setInterval(() => {
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
@@ -59,6 +71,8 @@ export default defineComponent({
                     clearInterval(timer);
                 }
             }, 1000);
+            await startPaymentPolling();
+
         });
 
         // 清除定时器
@@ -66,13 +80,24 @@ export default defineComponent({
             clearInterval(timer);
         });
 
-        const JourneyStore = useJourneyStore();
-        const handlePayed=() => {
+        const startPaymentPolling = async () => {
+            await journeyStore.PaymentPolling();
+            handlePayed();
+        }
+        const handlePayed = () => {
             router.push({
                 name: 'TakePhoto'
             });
         };
-        return { formattedTime, ClickToBack, payWay: JourneyStore.payWay ,handlePayed};
+        const payWay = computed(() => {
+            return journeyStore.payWay;
+        });
+        const currentPayment = computed(() => {
+            return journeyStore.payment.find(
+                p => p.output_str_channel === journeyStore.payWay
+            )
+        })
+        return { formattedTime, ClickToBack, payWay, handlePayed, currentPayment };
     },
 });
 </script>

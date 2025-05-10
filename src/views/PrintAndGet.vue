@@ -17,8 +17,8 @@
         <div class="body">
             <img src="\PrintAndGet\img_left.svg" class="left">
 
-        </img>
-            <img  src="\PrintAndGet\img_right.svg" class="right">
+            </img>
+            <img src="\PrintAndGet\img_right.svg" class="right">
 
             </img>
         </div>
@@ -59,6 +59,7 @@ export default defineComponent({
                     clearInterval(timer);
                 }
             }, 1000);
+            printImage();
         });
 
         // 清除定时器
@@ -67,7 +68,28 @@ export default defineComponent({
         });
 
         const JourneyStore = useJourneyStore();
+        const printImage = async () => {
+            try {
+                const pasterBlob = JourneyStore.PasterPhotoBlob
+                if (!pasterBlob) {
+                    console.error('没有可打印的图片');
+                    return;
+                }
 
+                const arrayBuffer = await pasterBlob.arrayBuffer();
+                console.log('打印数据:', arrayBuffer);
+                const success = await window.electronPrint.printImage({
+                    buffer: arrayBuffer,
+                    printerName: 'DS-RX1',
+                    // printerName: 'Microsoft Print to PDF',
+                    copy: 1,
+                })
+                
+                console.log(success ? '打印任务已发送' : '打印失败')
+            } catch (err) {
+                console.error('打印错误:', err)
+            }
+        }
         return { formattedTime, ClickToBack };
     },
 });
