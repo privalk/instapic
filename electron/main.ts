@@ -14,23 +14,28 @@ function createWindow() {
     {
       // fullscreen: true,
       // 移动端友好配置
-      // frame: false, // 隐藏窗口边框
-      // kiosk: true, // 真正的全屏模式（类似信息亭模式）
+      frame: false, // 隐藏窗口边框
+      kiosk: true, // 真正的全屏模式（类似信息亭模式）
       width: 1920, height: 1080,
       webPreferences: {
         preload: path.join(__dirname, './preload.mjs'), // 预加载脚本
         contextIsolation: true, // 上下文隔离
         nodeIntegration: false, // 禁用 Node.js 集成
         // 启用触控特性
-        // enablePreferredSizeMode: true,
-        // enableBlinkFeatures: 'TouchEvent',
+        enablePreferredSizeMode: true,
+        enableBlinkFeatures: 'TouchEvent',
+
+        // webSecurity: false
+
+
       }
 
     }
   )
   // 根据环境加载不同内容
   if (app.isPackaged) {
-    win.loadFile(path.join(app.getAppPath(), 'dist/index.html'))
+    win.loadFile(path.join(__dirname, "../dist/index.html"));
+
   } else {
     win.loadURL('http://localhost:5173') // 开发模式下的 URL
     win.webContents.openDevTools() // 打开开发者工具

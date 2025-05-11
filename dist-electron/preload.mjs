@@ -1,7 +1,1 @@
-"use strict";
-const electron = require("electron");
-console.log("Preload script executed");
-electron.contextBridge.exposeInMainWorld("electronPrint", {
-  printImage: (params) => electron.ipcRenderer.invoke("silent-print-image", params),
-  getPrinters: () => electron.ipcRenderer.invoke("get-printers")
-});
+"use strict";const e=require("electron");console.log("Preload script executed");e.contextBridge.exposeInMainWorld("electronPrint",{printImage:r=>e.ipcRenderer.invoke("silent-print-image",r),getPrinters:()=>e.ipcRenderer.invoke("get-printers")});

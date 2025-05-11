@@ -154,7 +154,7 @@ export default defineComponent({
         };
         const handleGestureMove = (event: Interact.GestureEvent) => {
             const target = event.target as HTMLElement
-            const index = Array.from(target.parentNode!.children).indexOf(target) - 1
+            const index = Array.from(target.parentNode!.children).indexOf(target)
             const img = stickers.value[index]
 
             img.scale = event.scale

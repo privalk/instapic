@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import GridSelect from '@/views/GridSelect.vue'
 import WaySelect from '@/views/WaySelect.vue'
@@ -13,7 +13,7 @@ import FilterSelect from '@/views/FilterSelect.vue'
 import Paster from '@/views/Paster.vue'
 import PrintAndGet from '@/views/PrintAndGet.vue'
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
@@ -79,7 +79,7 @@ const router = createRouter({
       path: '/PrintAndGet',
       name: 'PrintAndGet',
       component: PrintAndGet
-    }
+    },
   ],
 })
 

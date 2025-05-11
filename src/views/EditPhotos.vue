@@ -159,6 +159,8 @@ export default defineComponent({
             console.log('限制区域:', restriction)
             interact('.draggable-image')
                 .draggable({
+                    maxPerElement: 4,
+                    max: Infinity  ,
                     inertia: true,
                     modifiers: [
                         interact.modifiers.restrictRect({
@@ -207,7 +209,7 @@ export default defineComponent({
         }
         const handleGestureMove = (event: Interact.GestureEvent) => {
             const target = event.target as HTMLElement
-            const index = Array.from(target.parentNode!.children).indexOf(target) - 1
+            const index = Array.from(target.parentNode!.children).indexOf(target) 
             const img = images.value[index]
 
             img.scale = event.scale
