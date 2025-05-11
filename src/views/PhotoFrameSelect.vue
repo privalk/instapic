@@ -142,7 +142,7 @@ export default defineComponent({
     height: 336px;
     object-fit: contain;
     /* border-radius: 10px; */
-    background: #fff;
+    background: #D8D8D8;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -150,7 +150,7 @@ export default defineComponent({
     width: 100%;
     height: 100%;
     object-fit: contain;
-    background: #fff;
+    background: #D8D8D8;
 
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }

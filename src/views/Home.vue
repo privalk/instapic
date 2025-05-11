@@ -20,7 +20,7 @@ export default defineComponent({
         const authStore = useAuthStore();
         const journeyStore = useJourneyStore();
         const ClickToStart = async () => {
-            journeyStore.init()
+
             await journeyStore.JourneyCreation();
 
             router.push({ name: 'GridSelect' });
@@ -28,10 +28,12 @@ export default defineComponent({
         };
 
         onMounted(async () => {
+
             await authStore.DeviceCreation();
             await authStore.ServiceInquiry();
             await authStore.GoodInquiry();
             await authStore.SpecificationInquiry();
+            journeyStore.init();
 
         });
         return { ClickToStart };

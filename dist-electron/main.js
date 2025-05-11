@@ -2184,7 +2184,6 @@ app.commandLine.appendSwitch("--enable-features", "TouchableApp");
 app.commandLine.appendSwitch("--force-app-mode");
 app.whenReady().then(() => {
   createWindow();
-  console.log(require$$1.join(__dirname, "./preload.mjs"));
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -2195,14 +2194,16 @@ app.on("window-all-closed", () => {
 ipcMain.handle("get-printers", (event) => {
   return BrowserWindow.getAllWindows()[0].webContents.getPrintersAsync();
 });
-const printImageFile = (filePath, printerName, copies) => {
-  return new Promise((resolve, reject) => {
-    const cmd = process.platform === "win32" ? `rundll32 C:\\Windows\\System32\\shimgvw.dll,ImageView_PrintTo /pt "${filePath}" "${printerName}"` : `lp -d "${printerName}" -n ${copies} "${filePath}"`;
-    exec(cmd, (error, stdout, stderr) => {
-      if (error) reject(`打印失败: ${stderr}`);
-      else resolve(stdout);
+const printImageFile = async (filePath, printerName, copies) => {
+  for (let i = 0; i < copies; i++) {
+    await new Promise((resolve, reject) => {
+      const cmd = `rundll32 C:\\Windows\\System32\\shimgvw.dll,ImageView_PrintTo /pt "${filePath}" "${printerName}"`;
+      exec(cmd, (error, stdout, stderr) => {
+        if (error) reject(`打印失败: ${stderr}`);
+        else resolve(stdout);
+      });
     });
-  });
+  }
 };
 ipcMain.handle("silent-print-image", async (_, {
   buffer,

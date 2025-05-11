@@ -19,10 +19,12 @@
                 <div class="payNum">
                     <div class="payNum_">
                         <div class="payNum__">
-                            <img src="/PaySelect/text_needToPay.svg" />￥{{ price }}
+                            <img src="/PaySelect/text_needToPay.svg" />
+                            <div v-if="!isAdd">￥{{ price }}</div>
+                            <div v-else>￥{{ overPrintPriceAllToPay }}</div>
                         </div>
                     </div>
-                    <img v-if="journeyWay === 1" src="/PaySelect/btn_UseCoupon.svg" @click="ClickToInputCoupon"
+                    <img v-if="journeyWay === 1 && !isAdd" src="/PaySelect/btn_UseCoupon.svg" @click="ClickToInputCoupon"
                         class="btn_useCoupon" />
                 </div>
                 <div class="payWay">
@@ -64,6 +66,7 @@ import { useJourneyStore } from '@/stores/journey';
 export default defineComponent({
 
     setup() {
+        const isAdd: boolean = router.currentRoute.value.params.isAdd === 'true';
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_PaySelect);
         const journeyStore = useJourneyStore();
@@ -85,15 +88,17 @@ export default defineComponent({
         const ClickToSelectPayWayToPay = (way: string) => {
             journeyStore.payWay = way;
             router.push({
-                name: 'Pay'
+                name: 'Pay',
+                params: { isAdd: isAdd.toString()}    
             });
         };
         const isLoading = ref(false);
         // 启动定时器
         onMounted(async () => {
+            console.log('isAdd', router.currentRoute.value.params.isAdd)
             isLoading.value = true;
             try {
-                await journeyStore.OrderCreation(false);
+                await journeyStore.OrderCreation(isAdd);
 
             } finally {
                 isLoading.value = false;
@@ -115,7 +120,8 @@ export default defineComponent({
         });
         const price = computed(() => (journeyStore.price / 100).toFixed(2));
         const journeyWay = computed(() => journeyStore.journeyWay);
-        return { formattedTime, ClickToBack, journeyWay, price, ClickToInputCoupon, ClickToSelectPayWayToPay, isLoading };
+        const overPrintPriceAllToPay = computed(() => (journeyStore.overPrintPriceAllToPay / 100).toFixed(2));
+        return { formattedTime, ClickToBack, journeyWay, price, ClickToInputCoupon, ClickToSelectPayWayToPay, isLoading, isAdd, overPrintPriceAllToPay };
     },
 });
 </script>

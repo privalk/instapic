@@ -59,18 +59,17 @@ ipcMain.handle('get-printers', (event) => {
 })
 
 // 核心打印函数
-const printImageFile = (filePath: string, printerName: string, copies: number) => {
-  return new Promise((resolve, reject) => {
-    const cmd = process.platform === 'win32'
-      ? `rundll32 C:\\Windows\\System32\\shimgvw.dll,ImageView_PrintTo /pt "${filePath}" "${printerName}"`
-      : `lp -d "${printerName}" -n ${copies} "${filePath}"`
-
-    exec(cmd, (error, stdout, stderr) => {
-      if (error) reject(`打印失败: ${stderr}`)
-      else resolve(stdout)
-    })
-  })
-}
+const printImageFile = async (filePath: string, printerName: string, copies: number) => {
+  for (let i = 0; i < copies; i++) {
+    await new Promise((resolve, reject) => {
+      const cmd = `rundll32 C:\\Windows\\System32\\shimgvw.dll,ImageView_PrintTo /pt "${filePath}" "${printerName}"`;
+      exec(cmd, (error, stdout, stderr) => {
+        if (error) reject(`打印失败: ${stderr}`);
+        else resolve(stdout);
+      });
+    });
+  }
+};
 
 ipcMain.handle('silent-print-image', async (_, {
   buffer,

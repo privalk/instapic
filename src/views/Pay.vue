@@ -48,9 +48,12 @@ export default defineComponent({
         QrcodeVue
     },
     setup() {
+        const isAdd: boolean = router.currentRoute.value.params.isAdd === 'true';
         const journeyStore = useJourneyStore();
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_Pay);
+        const isPollingActive = ref(true); // 控制是否继续轮询
+
         let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
@@ -78,16 +81,27 @@ export default defineComponent({
         // 清除定时器
         onUnmounted(() => {
             clearInterval(timer);
+            isPollingActive.value = false; // 终止轮询
         });
 
         const startPaymentPolling = async () => {
-            await journeyStore.PaymentPolling();
-            handlePayed();
-        }
+            const success = await journeyStore.PaymentPolling(() => isPollingActive.value,isAdd);
+            if (success) {
+                handlePayed();
+            }
+        };
         const handlePayed = () => {
-            router.push({
-                name: 'TakePhoto'
-            });
+            if (isAdd) {
+                router.push({
+                    name: 'PrintAndGet'
+                })
+            }
+            else {
+                router.push({
+                    name: 'TakePhoto'
+                });
+            }
+
         };
         const payWay = computed(() => {
             return journeyStore.payWay;

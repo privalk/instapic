@@ -2,7 +2,7 @@
     <v-container fluid class="container">
         <div class="header">
             <div class="btn_back">
-                <img src="/GridSelect/btn_Back.svg" alt="btn_back" width="74px" height="74px" />
+                <img src="/GridSelect/btn_Back.svg" alt="btn_back" width="74px" height="74px" @click="hanldBackHome" />
             </div>
             <img src="\PrintAndGet\title_printAndGet.svg" />
             <div class="time">
@@ -78,19 +78,25 @@ export default defineComponent({
 
                 const arrayBuffer = await pasterBlob.arrayBuffer();
                 console.log('打印数据:', arrayBuffer);
+                console.log('打印份数:', JourneyStore.PrintNum);
                 const success = await window.electronPrint.printImage({
                     buffer: arrayBuffer,
                     printerName: 'DS-RX1',
                     // printerName: 'Microsoft Print to PDF',
-                    copy: 1,
+                    copies: JourneyStore.PrintNum,
                 })
-                
+
                 console.log(success ? '打印任务已发送' : '打印失败')
             } catch (err) {
                 console.error('打印错误:', err)
             }
         }
-        return { formattedTime, ClickToBack };
+        const hanldBackHome = () => {
+            router.push({
+                name: 'Home'
+            });
+        }
+        return { formattedTime, hanldBackHome };
     },
 });
 </script>

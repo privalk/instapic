@@ -19,7 +19,7 @@ declare global {
       printImage: (params: {
         buffer: ArrayBuffer
         printerName?: string
-        copy?: number
+        copies?: number
       }) => Promise<boolean>
 
       /**

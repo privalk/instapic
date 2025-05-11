@@ -205,12 +205,13 @@ export default defineComponent({
         const pasterPreviewUrl = computed(() => {
             return journeyStore.PasterPhoto;
         });
-        const PrintNum = computed(() => {
-            return journeyStore.PrintNum;
+        const PrintNum = computed({
+            get: () => journeyStore.PrintNum,
+            set: (value) => {
+                journeyStore.PrintNum = value;
+            }
         });
-        const overPrintPriceAllToPay = computed(() => {
-            return journeyStore.overPrintPriceAllToPay;
-        });
+        const overPrintPriceAllToPay = computed(() => (journeyStore.overPrintPriceAllToPay / 100).toFixed(2));
 
         // 双击检测逻辑
         const lastTap = ref(0);
@@ -343,26 +344,17 @@ export default defineComponent({
         // 打印执行
         const handleprintImage = async () => {
             await captureHD();
-            router.push({ name: 'PrintAndGet' });
-            // try {
-            //     const pasterBlob = computed(() => JourneyStore.PasterPhotoBlob).value;
-            //     if (!pasterBlob) {
-            //         console.error('没有可打印的图片');
-            //         return;
-            //     }
+            if (PrintNum.value == 1) {
+                router.push({ name: 'PrintAndGet' });
+            }
+            else {
+                router.push({
+                    name: "PaySelect",
+                    params: { isAdd: 'true' }
+                })
+            }
 
-            //     const arrayBuffer = await pasterBlob.arrayBuffer();
-            //     console.log('打印数据:', arrayBuffer);
-            //     const success = await window.electronPrint.printImage({
-            //         buffer: arrayBuffer,
-            //         printerName: 'Microsoft Print to PDF',
-            //         copy:1,
-            //     })
-            //     console.log('打印结果:', success);
-            //     console.log(success ? '打印任务已发送' : '打印失败')
-            // } catch (err) {
-            //     console.error('打印错误:', err)
-            // }
+
         }
         return {
             formattedTime,

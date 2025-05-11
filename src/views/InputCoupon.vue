@@ -4,7 +4,7 @@
             <div class="btn_back" @click="ClickToBack">
                 <img src="/GridSelect/btn_Back.svg" alt="btn_back" width="74px" height="74px" />
             </div>
-            <img src="/InputCoupon/titile_inputCoupon.svg"  />
+            <img src="/InputCoupon/titile_inputCoupon.svg" />
             <div class="time">
                 <div class="time2">
                     <div class="time3">
@@ -107,6 +107,14 @@
         <div class="footer">
             <img src="/GridSelect/img_Footer.svg" />
         </div>
+        <v-snackbar v-model="snackbar.show" :timeout="snackbar.timeout" bottom right elevation="2" color="error"
+            class="center-snackbar">
+            {{ snackbar.message }}
+        </v-snackbar>
+        <v-overlay :model-value="isLoading" persistent :value="isLoading" absolute
+            class="d-flex justify-center align-center">
+            <v-progress-circular indeterminate size="64"></v-progress-circular>
+        </v-overlay>
     </v-container>
 </template>
 
@@ -117,11 +125,18 @@ import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
 
 export default defineComponent({
-   
+
     setup() {
+        // 新增：snackbar 状态
+        const snackbar = ref({
+            show: false,
+            message: '',
+            timeout: 3000,  // 3 秒后自动消失
+        });
         const configStore = useConfigStore();
+        const isLoading = ref(false);
         const timeLeft = ref(configStore.WaitTime_InputCoupon);
-       let timer: ReturnType<typeof setInterval>;
+        let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
             const mins = Math.floor(timeLeft.value / 60);
@@ -148,10 +163,13 @@ export default defineComponent({
             clearInterval(timer);
         });
 
-        const JourneyStore = useJourneyStore();
+        const journeyStore = useJourneyStore();
 
 
-        const couponCode = ref(JourneyStore.couponCode);
+        const couponCode = computed({
+            get: () => journeyStore.couponCode,
+            set: (val) => journeyStore.couponCode = val
+        });
         const handleNumberInput = (num: string) => {
 
             couponCode.value += num;
@@ -163,14 +181,30 @@ export default defineComponent({
         const deleteLastChar = () => {
             couponCode.value = couponCode.value.slice(0, -1);
         };
-        const submitCoupon = () => {
+        const submitCoupon = async () => {
+            try {
+                isLoading.value = true;
+                // 假设你的 store 方法改为抛出异常，而不是内部 catch
+                await journeyStore.CouponApplyToOrder();
+                // 如果需要成功提示，也可以在这里处理
+                router.push({
+                    name: 'PaySelect',
+                    params: {
+                        isAdd:'false'
+                    }
+                });
+            } catch (error) {
 
-            // 这里添加实际的优惠券验证逻辑
-            console.log('提交验证:', couponCode.value);
-            // 验证成功逻辑
-
+                snackbar.value.message = '优惠券应用失败,请检查是否正确。';
+                snackbar.value.show = true;
+                console.error('优惠券应用请求失败:', error);
+            }
+            finally {
+                isLoading.value = false;
+            }
         };
-        return { formattedTime, ClickToBack, handleNumberInput, clearInput, deleteLastChar, submitCoupon,couponCode };
+
+        return { formattedTime, ClickToBack, handleNumberInput, clearInput, deleteLastChar, submitCoupon, couponCode, snackbar,isLoading };
     },
 });
 </script>
@@ -185,6 +219,14 @@ export default defineComponent({
 .btn_num_clear:active {
     transform: scale(0.95);
     opacity: 0.8;
+}
+
+.center-snackbar {
+    /* 水平、垂直都居中 */
+    top: 20% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    /* 如果你只想水平居中又想在底部偏上显示，把 top 改成 bottom，再调整 translateY */
 }
 
 .btn_num_clear {

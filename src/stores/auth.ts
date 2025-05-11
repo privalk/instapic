@@ -109,11 +109,7 @@ export const useAuthStore = defineStore('auth', {
                     this[pasterKey] = cfg.Paster.map(path => `${baseUrl}${path}`);
                 }
 
-                console.log('规格和贴纸已更新：', {
-                    F01: this.Instapic_FrameType_01,
-                    P01: this.Instapic_Paster_01,
-                    // ...
-                });
+                console.log('规格和贴纸已更新');
             }
             catch (err) {
                 console.error('规格查询出错', err);
