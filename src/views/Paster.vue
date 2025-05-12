@@ -350,7 +350,7 @@ export default defineComponent({
             else {
                 router.push({
                     name: "PaySelect",
-                    params: { isAdd: 'true' }
+                    params: { isAdd: 'true',isCouponed: 'false' }
                 })
             }
 

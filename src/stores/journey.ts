@@ -84,7 +84,7 @@ export const useJourneyStore = defineStore('journey', {
             this.journeyWay = num;
             router.push({
                 name: 'PaySelect',
-                params: { isAdd: 'false' }
+                params: { isAdd: 'false',isCouponed: 'false' }
             });
         },
         decrementAttempt(type: string) {  // 新增响应式修改方法

@@ -24,7 +24,7 @@
                             <div v-else>￥{{ overPrintPriceAllToPay }}</div>
                         </div>
                     </div>
-                    <img v-if="journeyWay === 1 && !isAdd" src="/PaySelect/btn_UseCoupon.svg" @click="ClickToInputCoupon"
+                    <img v-if="journeyWay === 1 && !isAdd&&!isCouponed" src="/PaySelect/btn_UseCoupon.svg" @click="ClickToInputCoupon"
                         class="btn_useCoupon" />
                 </div>
                 <div class="payWay">
@@ -67,6 +67,7 @@ export default defineComponent({
 
     setup() {
         const isAdd: boolean = router.currentRoute.value.params.isAdd === 'true';
+        const isCouponed: boolean = router.currentRoute.value.params.isCouponed === 'true';
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_PaySelect);
         const journeyStore = useJourneyStore();
@@ -78,7 +79,9 @@ export default defineComponent({
             return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         });
         const ClickToBack = () => {
-            router.back();
+            router.push({
+                name: 'Home',
+            })
         };
         const ClickToInputCoupon = () => {
             router.push({
@@ -121,7 +124,7 @@ export default defineComponent({
         const price = computed(() => (journeyStore.price / 100).toFixed(2));
         const journeyWay = computed(() => journeyStore.journeyWay);
         const overPrintPriceAllToPay = computed(() => (journeyStore.overPrintPriceAllToPay / 100).toFixed(2));
-        return { formattedTime, ClickToBack, journeyWay, price, ClickToInputCoupon, ClickToSelectPayWayToPay, isLoading, isAdd, overPrintPriceAllToPay };
+        return { formattedTime, ClickToBack, journeyWay, price, ClickToInputCoupon, ClickToSelectPayWayToPay, isLoading, isAdd, overPrintPriceAllToPay,isCouponed };
     },
 });
 </script>

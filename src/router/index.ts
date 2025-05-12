@@ -31,7 +31,7 @@ const router = createRouter({
       component: WaySelect
     },
     {
-      path: '/PaySelect/:isAdd',
+      path: '/PaySelect/:isAdd:isCouponed',
       name: 'PaySelect',
       component: PaySelect
     },

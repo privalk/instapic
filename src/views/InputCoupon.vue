@@ -190,7 +190,8 @@ export default defineComponent({
                 router.push({
                     name: 'PaySelect',
                     params: {
-                        isAdd:'false'
+                        isAdd:'false',
+                        isCouponed: 'true'
                     }
                 });
             } catch (error) {
