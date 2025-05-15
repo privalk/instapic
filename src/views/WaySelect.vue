@@ -13,16 +13,7 @@
                 </div> -->
             </div>
         </div>
-        <div class="slider-wrapper">
-            <v-slider v-model="sliderValue" :min="0" :max="timeAll" step="1" class="custom-slider" hide-details
-                thumb-size="0" color='#8a4fffb2'>
-                <template #prepend>
-                    <div class="value-label" :style="{ left: `${sliderValue / timeAll * 100 + 3}%` }">
-                        {{ sliderValue }}<span class="unit">s</span>
-                    </div>
-                </template>
-            </v-slider>
-        </div>
+        <TimeSlider v-model="sliderValue" :max="timeAll"  style="right:1%;top:1.5%"/>
         <div class="body">
             <div class="body_">
                 <div class="btn_Selcet_take" @click="Select_Way(1)">
@@ -51,14 +42,16 @@ import { defineComponent, ref, onMounted, onUnmounted, computed } from 'vue';
 import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
-
+import TimeSlider from '@/components/TimeSlider.vue';
 export default defineComponent({
-
+    components: {
+        TimeSlider
+    },
     setup() {
         const configStore = useConfigStore();
         const timeAll = ref(configStore.WaitTime_GridSelect);
         const sliderValue = computed(() => {
-            return timeAll.value - timeLeft.value;
+            return timeLeft.value;
         })
         const timeLeft = ref(configStore.WaitTime_WaySelect);
         let timer: ReturnType<typeof setInterval>;

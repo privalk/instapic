@@ -6,17 +6,18 @@
             </div>
             <img src="/InputCoupon/titile_inputCoupon.svg" />
             <div class="time">
-                <div class="time2">
+                <!-- <div class="time2">
                     <div class="time3">
                         {{ formattedTime }}
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
-
+        <TimeSlider v-model="sliderValue" :max="timeAll" style="right:1%;top:1.5%" />
         <div class="body">
             <div class="instruction">
                 <img src="\InputCoupon\text_instruction.svg" />
+                <video src="\InputCoupon\CouponTips.mp4" autoplay muted width="100%" height="100%" />
             </div>
             <div class="inputArea">
                 <div class="keyBoard">
@@ -123,9 +124,11 @@ import { defineComponent, ref, onMounted, onUnmounted, computed } from 'vue';
 import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
-
+import TimeSlider from '@/components/TimeSlider.vue';
 export default defineComponent({
-
+    components: {
+        TimeSlider
+    },
     setup() {
         // 新增：snackbar 状态
         const snackbar = ref({
@@ -136,13 +139,13 @@ export default defineComponent({
         const configStore = useConfigStore();
         const isLoading = ref(false);
         const timeLeft = ref(configStore.WaitTime_InputCoupon);
+        const timeAll = ref(configStore.WaitTime_InputCoupon);
+        const sliderValue = computed(() => {
+            return timeLeft.value;
+        })
         let timer: ReturnType<typeof setInterval>;
-        // 格式化时间为XX:XX
-        const formattedTime = computed(() => {
-            const mins = Math.floor(timeLeft.value / 60);
-            const secs = timeLeft.value % 60;
-            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-        });
+
+      
         const ClickToBack = () => {
             router.back();
         };
@@ -152,7 +155,7 @@ export default defineComponent({
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
                 } else {
-                    router.back();
+                    router.push({ name: 'Home' });
                     clearInterval(timer);
                 }
             }, 1000);
@@ -190,7 +193,7 @@ export default defineComponent({
                 router.push({
                     name: 'PaySelect',
                     params: {
-                        isAdd:'false',
+                        isAdd: 'false',
                         isCouponed: 'true'
                     }
                 });
@@ -205,7 +208,12 @@ export default defineComponent({
             }
         };
 
-        return { formattedTime, ClickToBack, handleNumberInput, clearInput, deleteLastChar, submitCoupon, couponCode, snackbar,isLoading };
+        return {
+            ClickToBack, handleNumberInput,
+            clearInput, deleteLastChar, submitCoupon, couponCode,
+            snackbar, isLoading,
+            timeAll, sliderValue
+        };
     },
 });
 </script>
@@ -455,7 +463,7 @@ export default defineComponent({
     gap: 8px;
     z-index: 2;
     border-radius: 16px;
-    background: rgba(190, 190, 190, 0.3);
+    /* background: rgba(190, 190, 190, 0.3); */
 }
 
 .btn_back {

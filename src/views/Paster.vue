@@ -6,16 +6,17 @@
             <img :src="sticker.src" />
         </div>
         <div class="header">
+            <TimeSlider v-model="sliderValue" :max="timeAll" style="position: absolute;" />
             <div class="btn_back">
 
             </div>
             <img src="\Paster\title_paster.svg" />
             <div class="time">
-                <div class="time2">
+                <!-- <div class="time2">
                     <div class="time3">
                         {{ formattedTime }}
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
 
@@ -77,9 +78,11 @@ import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
 import interact from 'interactjs';
 import { useAuthStore } from '@/stores/auth';
-
+import TimeSlider from '@/components/TimeSlider.vue'
 export default defineComponent({
-
+    components: {
+        TimeSlider
+    },
     setup() {
         const authStore = useAuthStore();
         const journeyStore = useJourneyStore();
@@ -173,6 +176,10 @@ export default defineComponent({
         }
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_Paster);
+        const timeAll = ref(configStore.WaitTime_Paster);
+        const sliderValue = computed(() => {
+            return timeLeft.value;
+        })
         let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
@@ -189,7 +196,7 @@ export default defineComponent({
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
                 } else {
-
+                    handleprintImage();
                     clearInterval(timer);
                 }
             }, 1000);
@@ -350,7 +357,7 @@ export default defineComponent({
             else {
                 router.push({
                     name: "PaySelect",
-                    params: { isAdd: 'true',isCouponed: 'false' }
+                    params: { isAdd: 'true', isCouponed: 'false' }
                 })
             }
 
@@ -369,6 +376,7 @@ export default defineComponent({
             captureHD,
             stickerPages, chunkArray,
             printImage: handleprintImage,
+            timeAll, sliderValue
 
         };
     },
@@ -454,7 +462,7 @@ export default defineComponent({
     gap: 8px;
     z-index: 2;
     border-radius: 16px;
-    background: rgba(190, 190, 190, 0.3);
+    /* background: rgba(190, 190, 190, 0.3); */
 }
 
 .btn_back {

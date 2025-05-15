@@ -1,15 +1,16 @@
 <template>
     <v-container fluid class="container">
         <div class="header">
+            <TimeSlider v-model="sliderValue" :max="timeAll" style="position: absolute;" />
             <div class="btn_back">
             </div>
             <img src="\EditPhotos\title_layout.svg" />
             <div class="time">
-                <div class="time2">
+                <!-- <div class="time2">
                     <div class="time3">
                         {{ formattedTime }}
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
 
@@ -56,9 +57,11 @@ import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
 import interact from 'interactjs'
-
+import TimeSlider from '@/components/TimeSlider.vue'
 export default defineComponent({
-
+    components: {
+        TimeSlider
+    },
     setup() {
         const JourneyStore = useJourneyStore();
         const middleElement = ref<HTMLElement | null>(null)
@@ -86,6 +89,10 @@ export default defineComponent({
         )
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_EditPhotos);
+        const timeAll = ref(configStore.WaitTime_EditPhotos);
+        const sliderValue = computed(() => {
+            return timeLeft.value;
+        })
         let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
@@ -111,7 +118,7 @@ export default defineComponent({
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
                 } else {
-
+                    handleConfirm();
                     clearInterval(timer);
                 }
             }, 1000);
@@ -339,7 +346,13 @@ export default defineComponent({
         };
 
 
-        return { formattedTime, images, getImageStyle, canvasContainer, middleElement, rightTopElement, captureHD, remainAttempts_selectFrame, handleReselectFrame, handleConfirm, framePhotoUrl };
+        return {
+            formattedTime,
+            images, getImageStyle, canvasContainer, middleElement,
+            rightTopElement, captureHD, remainAttempts_selectFrame,
+            handleReselectFrame, handleConfirm, framePhotoUrl,
+            timeAll, sliderValue
+        };
     },
 });
 </script>
@@ -572,7 +585,7 @@ export default defineComponent({
     gap: 8px;
     z-index: 2;
     border-radius: 16px;
-    background: rgba(190, 190, 190, 0.3);
+    /* background: rgba(190, 190, 190, 0.3); */
 }
 
 

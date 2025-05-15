@@ -1,16 +1,17 @@
 <template>
     <v-container fluid class="container">
         <div class="header">
+            <TimeSlider v-model="sliderValue" :max="timeAll" style="position: absolute;" />
             <div class="btn_back">
                 <!-- <img src="/GridSelect/btn_Back.svg" alt="btn_back" width="74px" height="74px" /> -->
             </div>
             <img src="/PhotoFrameSelect/title_PhotoFrameSelect.svg" />
             <div class="time">
-                <div class="time2">
+                <!-- <div class="time2">
                     <div class="time3">
                         {{ formattedTime }}
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
 
@@ -37,19 +38,21 @@ import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
 import { useAuthStore } from '@/stores/auth';
-
+import TimeSlider from '@/components/TimeSlider.vue'
 export default defineComponent({
-
+    components: {
+        TimeSlider
+    },
     setup() {
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_PhotoFrameSelect);
+        const timeAll = ref(configStore.WaitTime_PhotoFrameSelect);
+        const sliderValue = computed(() => {
+            return timeLeft.value;
+        })
         let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
-        const formattedTime = computed(() => {
-            const mins = Math.floor(timeLeft.value / 60);
-            const secs = timeLeft.value % 60;
-            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-        });
+
         // const ClickToBack = () => {
         //     router.back();
         // };
@@ -64,7 +67,7 @@ export default defineComponent({
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
                 } else {
-                    // router.back();
+                    ClickToNext();
                     clearInterval(timer);
                 }
             }, 1000);
@@ -103,7 +106,7 @@ export default defineComponent({
         );
 
         return {
-            formattedTime, ClickToNext, frameList,
+            timeAll, sliderValue, ClickToNext, frameList,
             selectedFrame,
             selectFrame
         };
@@ -233,7 +236,7 @@ export default defineComponent({
     gap: 8px;
     z-index: 2;
     border-radius: 16px;
-    background: rgba(190, 190, 190, 0.3);
+    /* background: rgba(190, 190, 190, 0.3); */
 }
 
 .btn_back {

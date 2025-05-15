@@ -13,7 +13,7 @@
                 </div>
             </div>
         </div>
-
+        <TimeSlider v-model="sliderValue" :max="timeAll" style="right:3%;top:1.5%" />
         <div class="body">
             <img src="\PrintAndGet\img_left.svg" class="left">
 
@@ -33,12 +33,18 @@ import { defineComponent, ref, onMounted, onUnmounted, computed } from 'vue';
 import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
-
+import TimeSlider from '@/components/TimeSlider.vue';
 export default defineComponent({
-
+    components: {
+        TimeSlider
+    },
     setup() {
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_PrintAndGet);
+        const timeAll = ref(configStore.WaitTime_PrintAndGet);
+        const sliderValue = computed(() => {
+            return timeLeft.value;
+        })
         let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
@@ -55,7 +61,7 @@ export default defineComponent({
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
                 } else {
-                    router.back();
+                    hanldBackHome();
                     clearInterval(timer);
                 }
             }, 1000);
@@ -96,7 +102,7 @@ export default defineComponent({
                 name: 'Home'
             });
         }
-        return { formattedTime, hanldBackHome };
+        return { formattedTime, hanldBackHome, timeAll, sliderValue };
     },
 });
 </script>

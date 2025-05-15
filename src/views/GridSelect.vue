@@ -13,17 +13,11 @@
                 </div> -->
             </div>
         </div>
-        <div class="slider-wrapper">
-            <v-slider v-model="sliderValue" :min="0" :max="timeAll" step="1" class="custom-slider" hide-details
-                thumb-size="0" color='#8a4fffb2'>
-                <template #prepend>
-                    <div class="value-label" :style="{ left: `${sliderValue / timeAll * 100 + 3}%` }">
-                        {{ sliderValue }}<span class="unit">s</span>
-                    </div>
-                </template>
-            </v-slider>
-        </div>
+
         <div class="body">
+            <div class="body_header">
+                <TimeSlider v-model="sliderValue" :max="timeAll" />
+            </div>
             <div class="up">
                 <div class="btn_GridType" @click="Select_GridNum(1)">
                     <div class="btn_GridType_inner">
@@ -63,14 +57,14 @@
                     </div>
                 </div>
             </div>
-            
+
         </div>
-           
+
         <div class="footer">
             <img src="/GridSelect/img_Footer.svg" />
-        
+
         </div>
-       
+
     </v-container>
 </template>
 
@@ -79,9 +73,11 @@ import { defineComponent, ref, onMounted, onUnmounted, computed } from 'vue';
 import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
-
+import TimeSlider from '@/components/TimeSlider.vue'
 export default defineComponent({
-
+    components: {
+        TimeSlider
+    },
     setup() {
         const configStore = useConfigStore();
         const timeAll = ref(configStore.WaitTime_GridSelect);
@@ -115,7 +111,7 @@ export default defineComponent({
 
         const JourneyStore = useJourneyStore();
         const sliderValue = computed(() => {
-            return timeAll.value - timeLeft.value;
+            return timeLeft.value;
         })
 
         return { ClickToBack, Select_GridNum: JourneyStore.Select_GridNum, sliderValue, timeLeft, timeAll };
@@ -124,6 +120,29 @@ export default defineComponent({
 </script>
 
 <style scoped>
+::v-deep(.v-slider .v-input__prepend) {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    margin-left: 0px !important;
+    margin-right: 0px !important;
+}
+
+::v-deep(.v-slider .v-slider-track__fill) {
+    height: 25px !important;
+    border-radius: 16px;
+    /* 轨道高度 */
+    margin-left: 10px;
+}
+
+
+
+::v-deep(.v-slider .v-slider-track__background) {
+    height: 40px !important;
+    border-radius: 40px;
+    border: #FFE17D 10px solid;
+}
+
+
 .slider-wrapper {
     position: relative;
     width: 527px;
@@ -140,13 +159,13 @@ export default defineComponent({
     position: absolute;
 
     transform: translateX(-50%);
-    background: rgba(138, 79, 255, 0.7);
+    background: #737373;
     color: white;
     font-weight: bold;
-    padding: 4px 12px;
-    border-radius: 12px;
+    padding: 8px 20px;
+    border-radius: 16px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    font-size: 16px;
+    font-size: 24px;
     white-space: nowrap;
     z-index: 3;
 }
@@ -347,5 +366,19 @@ export default defineComponent({
     padding: 0px;
     align-self: stretch;
     z-index: 2;
+}
+
+.body_header {
+    /* 自动布局子元素 */
+    width: 1750px;
+    height: 69px;
+    /* 自动布局 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 150px;
+    align-self: stretch;
+    z-index: 0;
 }
 </style>

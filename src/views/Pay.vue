@@ -7,14 +7,14 @@
             <img v-if="payWay === '微信支付'" src="/Pay/title_wechatPay.svg" />
             <img v-if="payWay === '支付宝'" src="/Pay/title_aliPay.svg" />
             <div class="time">
-                <div class="time2">
+                <!-- <div class="time2">
                     <div class="time3">
                         {{ formattedTime }}
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
-
+        <TimeSlider v-model="sliderValue" :max="timeAll" style="right:1%;top:1.5%" />
         <div class="body">
             <div class="QRcode">
                 <div class="QRcode_">
@@ -42,16 +42,21 @@ import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
 import QrcodeVue from 'qrcode.vue'
-
+import TimeSlider from '@/components/TimeSlider.vue';
 export default defineComponent({
     components: {
-        QrcodeVue
+        QrcodeVue,
+        TimeSlider
     },
     setup() {
         const isAdd: boolean = router.currentRoute.value.params.isAdd === 'true';
         const journeyStore = useJourneyStore();
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_Pay);
+        const timeAll = ref(configStore.WaitTime_Pay);
+        const sliderValue = computed(() => {
+            return timeLeft.value;
+        })
         const isPollingActive = ref(true); // 控制是否继续轮询
 
         let timer: ReturnType<typeof setInterval>;
@@ -70,7 +75,9 @@ export default defineComponent({
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
                 } else {
-                    router.back();
+                    router.push({
+                        name: 'Home'
+                    });
                     clearInterval(timer);
                 }
             }, 1000);
@@ -85,7 +92,7 @@ export default defineComponent({
         });
 
         const startPaymentPolling = async () => {
-            const success = await journeyStore.PaymentPolling(() => isPollingActive.value,isAdd);
+            const success = await journeyStore.PaymentPolling(() => isPollingActive.value, isAdd);
             if (success) {
                 handlePayed();
             }
@@ -98,7 +105,7 @@ export default defineComponent({
             }
             else {
                 router.push({
-                    name: 'TakePhoto'
+                    name: 'BeautyFilter'
                 });
             }
 
@@ -111,7 +118,7 @@ export default defineComponent({
                 p => p.output_str_channel === journeyStore.payWay
             )
         })
-        return { formattedTime, ClickToBack, payWay, handlePayed, currentPayment };
+        return { formattedTime, ClickToBack, payWay, handlePayed, currentPayment,timeAll,sliderValue};
     },
 });
 </script>
@@ -217,7 +224,7 @@ export default defineComponent({
     gap: 8px;
     z-index: 2;
     border-radius: 16px;
-    background: rgba(190, 190, 190, 0.3);
+    /* background: rgba(190, 190, 190, 0.3); */
 }
 
 .btn_back {

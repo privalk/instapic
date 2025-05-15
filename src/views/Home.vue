@@ -23,8 +23,8 @@ export default defineComponent({
 
             await journeyStore.JourneyCreation();
 
-            // router.push({ name: 'GridSelect' });
-            router.push({ name: 'BeautyFilter' });
+            router.push({ name: 'GridSelect' });
+            // router.push({ name: 'BeautyFilter' });
 
         };
 

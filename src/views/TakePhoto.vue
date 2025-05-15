@@ -1,16 +1,17 @@
 <template>
     <v-container fluid class="container">
         <div class="header">
+            <TimeSlider v-model="sliderValue" :max="timeAll" style="position: absolute;" />
             <div class="btn_back">
 
             </div>
             <img src="\TakePhoto\title_takePhoto.svg" />
             <div class="time">
-                <div class="time2">
+                <!-- <div class="time2">
                     <div class="time3">
                         {{ formattedTime }}
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
 
@@ -80,7 +81,11 @@ import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
 import type { ImageProcessor } from '@/worker/types';
 import type { VVirtualScroll } from 'vuetify/components/VVirtualScroll';
+import TimeSlider from '@/components/TimeSlider.vue'
 export default defineComponent({
+    components: {
+        TimeSlider
+    },
     setup() {
         const isProcessing = ref(false);
         const videoRef = ref<HTMLVideoElement | null>(null);
@@ -91,13 +96,14 @@ export default defineComponent({
 
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_TakePhoto);
+        const timeAll = ref(configStore.WaitTime_TakePhoto);
+        const sliderValue = computed(() => {
+            return timeLeft.value;
+        })
+
         let timer = 500 as number;
 
-        const formattedTime = computed(() => {
-            const mins = Math.floor(timeLeft.value / 60);
-            const secs = timeLeft.value % 60;
-            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-        });
+
         // 增强版滚动控制
         const ensureScrollToBottom = async () => {
             try {
@@ -270,7 +276,7 @@ export default defineComponent({
         const handleConfirm = () => {
 
             router.push({
-                name:'PhotoFrameSelect'
+                name: 'PhotoFrameSelect'
             });
 
         };
@@ -297,7 +303,7 @@ export default defineComponent({
 
 
         return {
-            formattedTime,
+            timeAll, sliderValue,
             num_photoToTakeAll,
             num_photoToTakeNow,
             takePhoto,
@@ -607,7 +613,7 @@ video {
     gap: 8px;
     z-index: 2;
     border-radius: 16px;
-    background: rgba(190, 190, 190, 0.3);
+    /* background: rgba(190, 190, 190, 0.3); */
 }
 
 .btn_back {

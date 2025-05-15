@@ -6,14 +6,14 @@
             </div>
             <img src="/PaySelect/title_paySelect.svg" alt="title_GridSelect" />
             <div class="time">
-                <div class="time2">
+                <!-- <div class="time2">
                     <div class="time3">
                         {{ formattedTime }}
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
-
+        <TimeSlider v-model="sliderValue" :max="timeAll" style="right:1%;top:1.5%" />
         <div class="body">
             <div class="body_">
                 <div class="payNum">
@@ -24,8 +24,8 @@
                             <div v-else>￥{{ overPrintPriceAllToPay }}</div>
                         </div>
                     </div>
-                    <img v-if="journeyWay === 1 && !isAdd&&!isCouponed" src="/PaySelect/btn_UseCoupon.svg" @click="ClickToInputCoupon"
-                        class="btn_useCoupon" />
+                    <img v-if="journeyWay === 1 && !isAdd && !isCouponed" src="/PaySelect/btn_UseCoupon.svg"
+                        @click="ClickToInputCoupon" class="btn_useCoupon" />
                 </div>
                 <div class="payWay">
                     <div class="payWay_">
@@ -62,22 +62,24 @@ import { defineComponent, ref, onMounted, onUnmounted, computed } from 'vue';
 import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
-
+import TimeSlider from '@/components/TimeSlider.vue';
 export default defineComponent({
-
+    components: {
+        TimeSlider
+    },
     setup() {
+
         const isAdd: boolean = router.currentRoute.value.params.isAdd === 'true';
         const isCouponed: boolean = router.currentRoute.value.params.isCouponed === 'true';
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_PaySelect);
+        const timeAll = ref(configStore.WaitTime_PaySelect);
+        const sliderValue = computed(() => {
+            return timeLeft.value;
+        })
         const journeyStore = useJourneyStore();
         let timer: ReturnType<typeof setInterval>;
-        // 格式化时间为XX:XX
-        const formattedTime = computed(() => {
-            const mins = Math.floor(timeLeft.value / 60);
-            const secs = timeLeft.value % 60;
-            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-        });
+     
         const ClickToBack = () => {
             router.push({
                 name: 'Home',
@@ -92,7 +94,7 @@ export default defineComponent({
             journeyStore.payWay = way;
             router.push({
                 name: 'Pay',
-                params: { isAdd: isAdd.toString()}    
+                params: { isAdd: isAdd.toString() }
             });
         };
         const isLoading = ref(false);
@@ -124,7 +126,12 @@ export default defineComponent({
         const price = computed(() => (journeyStore.price / 100).toFixed(2));
         const journeyWay = computed(() => journeyStore.journeyWay);
         const overPrintPriceAllToPay = computed(() => (journeyStore.overPrintPriceAllToPay / 100).toFixed(2));
-        return { formattedTime, ClickToBack, journeyWay, price, ClickToInputCoupon, ClickToSelectPayWayToPay, isLoading, isAdd, overPrintPriceAllToPay,isCouponed };
+        return {
+             ClickToBack, journeyWay,
+            price, ClickToInputCoupon, ClickToSelectPayWayToPay,
+            isLoading, isAdd, overPrintPriceAllToPay, isCouponed,
+            sliderValue, timeAll
+        };
     },
 });
 </script>
@@ -305,7 +312,7 @@ export default defineComponent({
     gap: 8px;
     z-index: 2;
     border-radius: 16px;
-    background: rgba(190, 190, 190, 0.3);
+    /* background: rgba(190, 190, 190, 0.3); */
 }
 
 .btn_back {

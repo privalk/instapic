@@ -1,16 +1,18 @@
 <template>
     <v-container fluid class="container">
+
         <div class="header">
+            <TimeSlider v-model="sliderValue" :max="timeAll" style="position: absolute;" />
             <div class="btn_back">
                 <!-- <img src="/GridSelect/btn_Back.svg" alt="btn_back" width="74px" height="74px" /> -->
             </div>
             <img src="\BeautyFilter\title_BeautyFilter.svg" />
             <div class="time">
-                <div class="time2">
+                <!-- <div class="time2">
                     <div class="time3">
                         {{ formattedTime }}
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
 
@@ -25,22 +27,25 @@
                     <video ref="videoElement" class="video-preview" autoplay playsinline></video>
                     <!-- <canvas ref="canvasElement" class="canvas-preview"></canvas> -->
                 </div>
-                <img class="btn_startPhoto" src="\BeautyFilter\btn_startPhoto.svg" @click="handleClick" />
+                <img class="btn_startPhoto" src="\BeautyFilter\btn_startPhoto.svg" @click="handleStartPhoto" />
             </div>
         </div>
     </v-container>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { defineComponent, ref, onMounted, onUnmounted, computed } from 'vue';
 import { useConfigStore } from '@/stores/config';
 
 import { useJourneyStore } from '@/stores/journey';
 
 import { useQueenBeauty } from '@/composables/useBeautyCamera';
-
+import TimeSlider from '@/components/TimeSlider.vue'
+import router from '@/router';
 export default defineComponent({
-
+    components: {
+        TimeSlider
+    },
     setup() {
         const videoElement = ref<HTMLVideoElement | null>(null);
         const cameraStream = ref<MediaStream | null>(null);
@@ -52,10 +57,15 @@ export default defineComponent({
             }
         });
 
-        const queen=useQueenBeauty(videoElement, cameraStream);
+        const queen = useQueenBeauty(videoElement, cameraStream);
 
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_BeautyFilter);
+        const timeAll = ref(configStore.WaitTime_BeautyFilter);
+        const sliderValue = computed(() => {
+            return timeLeft.value;
+        })
+
         let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
@@ -74,7 +84,7 @@ export default defineComponent({
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
                 } else {
-                    // router.back();
+
                     clearInterval(timer);
                 }
             }, 1000);
@@ -82,19 +92,40 @@ export default defineComponent({
 
         // 清除定时器
         onUnmounted(() => {
-            handleClick();
+            queen.cleanupQueenEngine();
             clearInterval(timer);
         });
-        const handleClick = () => {
-            queen.cleanupQueenEngine();
+        const handleStartPhoto = () => {
+            router.push({
+                name: 'TakePhoto',
+            });
         }
 
-        return { formattedTime, videoElement, beautyStrength, handleClick };
+        return { formattedTime, videoElement, beautyStrength, handleStartPhoto, timeAll, sliderValue };
     },
 });
 </script>
 
 <style scoped>
+.custom-slider :deep(.v-slider-track__background) {
+    width: 40px !important;
+    transform: translateY(3%);
+    height: 108% !important;
+    border-radius: 24px;
+    border: #000000 2px solid;
+}
+
+
+.custom-slider :deep(.v-slider-track__fill) {
+    width: 28px !important;
+    /* transform: translateY(1%); */
+    border-radius: 24px;
+    margin-bottom: 10px;
+    margin-top: 20px;
+}
+
+
+
 .btn_startPhoto:active {
     transform: scale(0.95);
     opacity: 0.8;
@@ -207,7 +238,7 @@ export default defineComponent({
     gap: 8px;
     z-index: 2;
     border-radius: 16px;
-    background: rgba(190, 190, 190, 0.3);
+    /* background: rgba(190, 190, 190, 0.3); */
 }
 
 .btn_back {
