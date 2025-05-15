@@ -16,14 +16,14 @@ export default defineConfig({
     vuetify({
       styles: { configFile: 'src/scss/vuetify.scss' } // 指定 SASS 配置文件
     }),
-    electron({
-      main: {
-        entry: 'electron/main.ts',
-      },
-      preload: {
-        input: 'electron/preload.ts',
-      },
-    }),
+    // electron({
+    //   main: {
+    //     entry: 'electron/main.ts',
+    //   },
+    //   preload: {
+    //     input: 'electron/preload.ts',
+    //   },
+    // }),
   ],
   worker: {
     plugins: () => [comlink()]

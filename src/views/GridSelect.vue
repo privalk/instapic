@@ -6,14 +6,23 @@
             </div>
             <img src="/GridSelect/title_GridSelect.svg" alt="title_GridSelect" />
             <div class="time">
-                <div class="time2">
+                <!-- <div class="time2">
                     <div class="time3">
                         {{ formattedTime }}
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
-
+        <div class="slider-wrapper">
+            <v-slider v-model="sliderValue" :min="0" :max="timeAll" step="1" class="custom-slider" hide-details
+                thumb-size="0" color='#8a4fffb2'>
+                <template #prepend>
+                    <div class="value-label" :style="{ left: `${sliderValue / timeAll * 100 + 3}%` }">
+                        {{ sliderValue }}<span class="unit">s</span>
+                    </div>
+                </template>
+            </v-slider>
+        </div>
         <div class="body">
             <div class="up">
                 <div class="btn_GridType" @click="Select_GridNum(1)">
@@ -54,10 +63,14 @@
                     </div>
                 </div>
             </div>
+            
         </div>
+           
         <div class="footer">
             <img src="/GridSelect/img_Footer.svg" />
+        
         </div>
+       
     </v-container>
 </template>
 
@@ -71,14 +84,15 @@ export default defineComponent({
 
     setup() {
         const configStore = useConfigStore();
+        const timeAll = ref(configStore.WaitTime_GridSelect);
         const timeLeft = ref(configStore.WaitTime_GridSelect);
         let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
-        const formattedTime = computed(() => {
-            const mins = Math.floor(timeLeft.value / 60);
-            const secs = timeLeft.value % 60;
-            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-        });
+        // const formattedTime = computed(() => {
+        //     const mins = Math.floor(timeLeft.value / 60);
+        //     const secs = timeLeft.value % 60;
+        //     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        // });
         const ClickToBack = () => {
             router.back();
         };
@@ -100,13 +114,48 @@ export default defineComponent({
         });
 
         const JourneyStore = useJourneyStore();
+        const sliderValue = computed(() => {
+            return timeAll.value - timeLeft.value;
+        })
 
-        return { formattedTime, ClickToBack, Select_GridNum: JourneyStore.Select_GridNum };
+        return { ClickToBack, Select_GridNum: JourneyStore.Select_GridNum, sliderValue, timeLeft, timeAll };
     },
 });
 </script>
 
 <style scoped>
+.slider-wrapper {
+    position: relative;
+    width: 527px;
+    padding-bottom: 7px;
+
+}
+
+.custom-slider {
+    height: 0px;
+
+}
+
+.value-label {
+    position: absolute;
+
+    transform: translateX(-50%);
+    background: rgba(138, 79, 255, 0.7);
+    color: white;
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 16px;
+    white-space: nowrap;
+    z-index: 3;
+}
+
+.unit {
+    font-weight: normal;
+    margin-left: 2px;
+}
+
 .btn_GridType_inner {
     /* 自动布局子元素 */
     width: 450px;
@@ -226,7 +275,7 @@ export default defineComponent({
     gap: 8px;
     z-index: 2;
     border-radius: 16px;
-    background: rgba(190, 190, 190, 0.3);
+    /* background: rgba(190, 190, 190, 0.3); */
 }
 
 .btn_back {

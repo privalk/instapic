@@ -15,72 +15,48 @@
         </div>
 
         <div class="body">
-            <div class="left"><v-slider :max="1" :min="0" :step="0.1" class="custom-slider" color="white"
-                    thumb-color="black" track-color="#CDCDCD" direction="vertical"></v-slider>
+            <div class="left"><v-slider v-model="beautyStrength" :max="1" :min="0" :step="0.1" class="custom-slider"
+                    color="white" thumb-color="black" track-color="#CDCDCD" direction="vertical"></v-slider>
                 <img src="\BeautyFilter\text_BeautyFilter.svg" />
             </div>
 
             <div class="right">
                 <div class="cameraArea">
                     <video ref="videoElement" class="video-preview" autoplay playsinline></video>
-                    <canvas ref="canvasElement" class="canvas-preview"></canvas>
+                    <!-- <canvas ref="canvasElement" class="canvas-preview"></canvas> -->
                 </div>
-                <img class="btn_startPhoto" src="\BeautyFilter\btn_startPhoto.svg" />
+                <img class="btn_startPhoto" src="\BeautyFilter\btn_startPhoto.svg" @click="handleClick" />
             </div>
         </div>
     </v-container>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted, computed } from 'vue';
+import { defineComponent, ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
+import QueenEngine, { kQueenBeautyType, kQueenBeautyParams, kQueenBeautyMakeupType, kQueenBeautyFaceShapeType, kQueenBeautyBlend, Assets } from "aliyun-queen-engine"
+import { useQueenBeauty } from '@/composables/useBeautyCamera';
 
 export default defineComponent({
 
     setup() {
         const videoElement = ref<HTMLVideoElement | null>(null);
-        const canvasElement = ref<HTMLCanvasElement | null>(null);
-        let animationFrameId: number;
-
-        // 初始化摄像头
-        const initCamera = async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'user' }
-                });
-                if (videoElement.value) {
-                    videoElement.value.srcObject = stream;
-                }
-                startProcessing();
-            } catch (error) {
-                console.error('Error accessing camera:', error);
+        const cameraStream = ref<MediaStream | null>(null);
+        const journeyStore = useJourneyStore();
+        const beautyStrength = computed({
+            get: () => journeyStore.beautyStrength,
+            set: (value) => {
+                journeyStore.beautyStrength = value;
             }
-        };
+        });
 
-        // 图像处理
-        const applyEffects = () => {
-            if (!videoElement.value || !canvasElement.value) return;
-
-            const ctx = canvasElement.value.getContext('2d');
-            if (!ctx) return;
-
-            // 设置canvas尺寸匹配视频
-            const video = videoElement.value;
-            canvasElement.value.width = video.videoWidth;
-            canvasElement.value.height = video.videoHeight;
-
-            animationFrameId = requestAnimationFrame(applyEffects);
-        };
-
-        const startProcessing = () => {
-            applyEffects();
-        };
+        const queen=useQueenBeauty(videoElement, cameraStream);
 
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_BeautyFilter);
-       let timer: ReturnType<typeof setInterval>;
+        let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
             const mins = Math.floor(timeLeft.value / 60);
@@ -92,7 +68,8 @@ export default defineComponent({
         // };
         // 启动定时器
         onMounted(() => {
-            initCamera();
+            queen.startQueenEngine();
+
             timer = setInterval(() => {
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
@@ -105,18 +82,14 @@ export default defineComponent({
 
         // 清除定时器
         onUnmounted(() => {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-            if (videoElement.value?.srcObject) {
-                (videoElement.value.srcObject as MediaStream).getTracks().forEach(track => track.stop());
-            }
+            handleClick();
             clearInterval(timer);
         });
+        const handleClick = () => {
+            queen.cleanupQueenEngine();
+        }
 
-        const JourneyStore = useJourneyStore();
-
-        return { formattedTime, videoElement, canvasElement };
+        return { formattedTime, videoElement, beautyStrength, handleClick };
     },
 });
 </script>
@@ -127,10 +100,18 @@ export default defineComponent({
     opacity: 0.8;
 }
 
+.video-preview {
+    position: relative;
+    width: auto;
+    height: 530px;
+    overflow: hidden;
+
+}
+
 .cameraArea {
     position: relative;
     width: 960px;
-    height: 580px;
+    height: 549px;
     overflow: hidden;
     border-radius: 24px;
     border: 10px solid rgba(0, 0, 0, 0.2);

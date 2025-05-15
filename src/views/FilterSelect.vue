@@ -23,7 +23,7 @@
                 <div class="right_">
                     <div v-for="filterKey in (Object.keys(filters) as FilterKey[])" :key="filterKey" class="btn_filter"
                         @click="applyFilter(filterKey)" :class="{ 'active': selectedFilterKey === filterKey }">
-                        <div :class="`btn_filter_${filterKey}`"></div>
+                        <div :class="`btn_${filterKey}`"></div>
                     </div>
                 </div>
             </div>
@@ -40,7 +40,7 @@ import { defineComponent, ref, onMounted, onUnmounted, computed } from 'vue';
 import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
-type FilterKey = 'ziran' | 'zhigan' | 'jingzhi' | 'jiaopian' | 'heibai';
+type FilterKey = 'filter_1' | 'filter_2' | 'filter_3' | 'filter_4' | 'filter_5';
 export default defineComponent({
 
     setup() {
@@ -76,11 +76,11 @@ export default defineComponent({
         const filterPhoto = computed(() => JourneyStore.filterPhoto);
         // 滤镜参数集合
         const filters = ref({
-            ziran: 'saturate(1.2) brightness(1.1) contrast(1.05)',
-            zhigan: 'contrast(1.3) saturate(0.9)',
-            jingzhi: 'brightness(1.05) contrast(1.2) saturate(1.1)',
-            jiaopian: 'sepia(0.6) contrast(1.1) brightness(0.95)',
-            heibai: 'grayscale(100%)'
+            filter_1: 'saturate(1.2) brightness(1.1) contrast(1.05)',
+            filter_2: 'contrast(1.3) saturate(0.9)',
+            filter_3: 'brightness(1.05) contrast(1.2) saturate(1.1)',
+            filter_4: 'sepia(0.6) contrast(1.1) brightness(0.95)',
+            filter_5: 'grayscale(100%)'
         });
         const activeFilter = ref('');
         const selectedFilterKey = ref<FilterKey | null>(null);
@@ -169,8 +169,8 @@ export default defineComponent({
 
 .btn_filter {
     /* 自动布局子元素 */
-    width: 200px;
-    height: 200px;
+    width: 199px;
+    height: 265px;
     /* 自动布局 */
     display: flex;
     flex-direction: column;
@@ -184,47 +184,47 @@ export default defineComponent({
     box-shadow: inset 0px 1px 10px 0px rgba(255, 255, 255, 0.3), inset 1px 0px 5px 0px rgba(0, 0, 0, 0.3), inset 0px 0px 5px 0px rgba(234, 234, 234, 0.3), inset 0px 1px 5px 0px rgba(0, 0, 0, 0.3);
 }
 
-.btn_filter_ziran {
+.btn_filter_1 {
     /* 自动布局子元素 */
-    width: 180px;
-    height: 180px;
+    width: 179px;
+    height: 245px;
 
-    background: url('/FilterSelect/btn_ziran.png') no-repeat center center / cover;
+    background: url('/FilterSelect/btn_filter_1.png') no-repeat center center / cover;
 
 }
 
-.btn_filter_zhigan {
+.btn_filter_2 {
     /* 自动布局子元素 */
-    width: 180px;
-    height: 180px;
+    width: 179px;
+    height: 245px;
 
-    background: url('/FilterSelect/btn_zhigan.png') no-repeat center center / cover;
+    background: url('/FilterSelect/btn_filter_2.png') no-repeat center center / cover;
 }
 
-.btn_filter_jingzhi {
+.btn_filter_3{
     /* 自动布局子元素 */
-    width: 180px;
-    height: 180px;
+    width: 179px;
+    height: 245px;
 
-    background: url('/FilterSelect/btn_jingzhi.png') no-repeat center center / cover;
-
-}
-
-.btn_filter_jiaopian {
-    /* 自动布局子元素 */
-    width: 180px;
-    height: 180px;
-
-    background: url('/FilterSelect/btn_jiaopian.png') no-repeat center center / cover;
+    background: url('/FilterSelect/btn_filter_3.png') no-repeat center center / cover;
 
 }
 
-.btn_filter_heibai {
+.btn_filter_4 {
     /* 自动布局子元素 */
-    width: 180px;
-    height: 180px;
+    width: 179px;
+    height: 245px;
 
-    background: url('/FilterSelect/btn_heibai.png') no-repeat center center / cover;
+    background: url('/FilterSelect/btn_filter_4.png') no-repeat center center / cover;
+
+}
+
+.btn_filter_5 {
+    /* 自动布局子元素 */
+    width: 179px;
+    height: 245px;
+
+    background: url('/FilterSelect/btn_filter_5.png') no-repeat center center / cover;
 }
 
 .btn_filter:active {

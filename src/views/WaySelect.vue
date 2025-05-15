@@ -6,14 +6,23 @@
             </div>
             <img src="/WaySelect/title_WaySelect.svg" alt="title_GridSelect" />
             <div class="time">
-                <div class="time2">
+                <!-- <div class="time2">
                     <div class="time3">
                         {{ formattedTime }}
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
-
+        <div class="slider-wrapper">
+            <v-slider v-model="sliderValue" :min="0" :max="timeAll" step="1" class="custom-slider" hide-details
+                thumb-size="0" color='#8a4fffb2'>
+                <template #prepend>
+                    <div class="value-label" :style="{ left: `${sliderValue / timeAll * 100 + 3}%` }">
+                        {{ sliderValue }}<span class="unit">s</span>
+                    </div>
+                </template>
+            </v-slider>
+        </div>
         <div class="body">
             <div class="body_">
                 <div class="btn_Selcet_take" @click="Select_Way(1)">
@@ -47,8 +56,12 @@ export default defineComponent({
 
     setup() {
         const configStore = useConfigStore();
+        const timeAll = ref(configStore.WaitTime_GridSelect);
+        const sliderValue = computed(() => {
+            return timeAll.value - timeLeft.value;
+        })
         const timeLeft = ref(configStore.WaitTime_WaySelect);
-       let timer: ReturnType<typeof setInterval>;
+        let timer: ReturnType<typeof setInterval>;
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
             const mins = Math.floor(timeLeft.value / 60);
@@ -77,12 +90,44 @@ export default defineComponent({
 
         const JourneyStore = useJourneyStore();
 
-        return { formattedTime, ClickToBack, Select_Way: JourneyStore.Select_Way };
+        return { formattedTime, ClickToBack, Select_Way: JourneyStore.Select_Way, sliderValue, timeAll };
     },
 });
 </script>
 
 <style scoped>
+.slider-wrapper {
+    position: relative;
+    width: 527px;
+    padding-bottom: 7px;
+
+}
+
+.custom-slider {
+    height: 0px;
+
+}
+
+.value-label {
+    position: absolute;
+
+    transform: translateX(-50%);
+    background: rgba(138, 79, 255, 0.7);
+    color: white;
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 16px;
+    white-space: nowrap;
+    z-index: 3;
+}
+
+.unit {
+    font-weight: normal;
+    margin-left: 2px;
+}
+
 .btn_Selcet_up_ {
     /* 自动布局子元素 */
     width: 396px;
@@ -260,7 +305,7 @@ export default defineComponent({
     gap: 8px;
     z-index: 2;
     border-radius: 16px;
-    background: rgba(190, 190, 190, 0.3);
+    /* background: rgba(190, 190, 190, 0.3); */
 }
 
 .btn_back {

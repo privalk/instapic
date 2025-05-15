@@ -39,7 +39,7 @@ export const useJourneyStore = defineStore('journey', {
         order_add_id: '' as string, // 订单附加ID
         payment: [] as payment[], // 支付方式
 
-
+        beautyStrength:0 as number, // 美颜强度
 
     }),
 
