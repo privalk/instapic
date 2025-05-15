@@ -34,9 +34,9 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useConfigStore } from '@/stores/config';
-import router from '@/router';
+
 import { useJourneyStore } from '@/stores/journey';
-import QueenEngine, { kQueenBeautyType, kQueenBeautyParams, kQueenBeautyMakeupType, kQueenBeautyFaceShapeType, kQueenBeautyBlend, Assets } from "aliyun-queen-engine"
+
 import { useQueenBeauty } from '@/composables/useBeautyCamera';
 
 export default defineComponent({
