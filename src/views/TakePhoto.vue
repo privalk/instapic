@@ -293,6 +293,16 @@ export default defineComponent({
             }
         };
         const handleConfirm = () => {
+            // 当使用8宫格时复制照片
+            if (JourneyStore.num_grid === 8) {
+                // 确保当前正好拍了4张
+                if (JourneyStore.photos.length === 4) {
+                    // 深拷贝数组并合并
+                    JourneyStore.photos = [...JourneyStore.photos, ...[...JourneyStore.photos]]
+                } else {
+                    console.warn('8宫格模式下需要拍摄4张照片，当前数量：', JourneyStore.photos.length)
+                }
+            }
 
             router.push({
                 name: 'PhotoFrameSelect'

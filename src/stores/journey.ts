@@ -13,7 +13,7 @@ export const useJourneyStore = defineStore('journey', {
     state: () => ({
         config: useConfigStore(), // 引入配置文件
         auth: useAuthStore(), // 引入配置文件
-        num_grid:  2 as number, // 宫格数量
+        num_grid:  8 as number, // 宫格数量
         journeyWay: 0 as number, // 体验方式 1:现场拍摄   2：上传 
         price: 35 as number, // 价格
         payWay: '' as string, // 支付方式 支付宝 微信支付

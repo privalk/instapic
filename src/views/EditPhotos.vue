@@ -17,7 +17,7 @@
         <div class="body" ref="canvasContainer">
 
             <div v-for="(img, index) in images" :key="index" class="draggable-image" :style="getImageStyle(img)">
-                <img :src="img.src" :style="{ opacity: img.opacity }" />
+                <img :src="img.src" :style="{ opacity: img.opacity }"  @contextmenu.prevent />
             </div>
 
             <div class="left">
@@ -657,4 +657,17 @@ export default defineComponent({
     align-self: stretch;
     z-index: 2;
 }
+
+.draggable-image img {
+    /* 新增触摸事件抑制 */
+    -webkit-touch-callout: none;
+    /* 确保所有浏览器禁用选择 */
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    /* 可选：禁用指针事件 */
+    /* pointer-events: none; */
+}
+
 </style>
