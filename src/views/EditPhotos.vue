@@ -32,7 +32,8 @@
                 <div class="right_bottom">
                     <div class="mod_Reselect">
                         <div class="mod_Reselect_">
-                            <img src="\EditPhotos\btn_ReselectFrame.png" class="btn" @click="handleReselectFrame" />
+                            <img src="\EditPhotos\btn_ReselectFrame.png" class="btn" @click="handleReselectFrame"
+                                :class="{ disabled: remainAttempts_selectFrame <= 0 }" />
                             <div class="text_Reselect">
                                 <img src="\EditPhotos\remindTimes.svg">
                                 <div class="text_Reselect_"> {{ remainAttempts_selectFrame }}</div>
@@ -328,12 +329,14 @@ export default defineComponent({
         };
         const handleReselectFrame = () => {
             // 处理重新选择相框的逻辑
-            if (JourneyStore.remainAttempts_selectFrame > 0)
+            if (JourneyStore.remainAttempts_selectFrame > 0) {
                 console.log('重新选择相框');
-            JourneyStore.decrementAttempt('selectFrame')
-            router.push({
-                name: 'PhotoFrameSelect'
-            })
+                JourneyStore.decrementAttempt('selectFrame')
+                router.push({
+                    name: 'PhotoFrameSelect'
+                })
+            }
+
 
         };
         const handleConfirm = async () => {
@@ -358,6 +361,19 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.btn.disabled {
+    filter: grayscale(100%);
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* 保持原有激活状态样式 */
+.btn:active:not(.disabled) {
+    transform: scale(0.95);
+    opacity: 0.8;
+}
+
 .btn:active {
     transform: scale(0.95);
     opacity: 0.8;

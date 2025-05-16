@@ -55,7 +55,8 @@
                         @click="handleNextTake" />
                     <img class="btn" v-else src="\TakePhoto\btn_confirm.png" @click="handleConfirm" />
                     <div class="retake">
-                        <img class="btn" src="\TakePhoto\btn_retake.png" @click="handleRetake" />
+                        <img class="btn" src="\TakePhoto\btn_retake.png" @click="handleRetake"
+                            :class="{ disabled: remainAttempts <= 0 }" />
                         <div class="retake_">
                             <img src="\TakePhoto\text_remainAttempts.svg" />
                             <div class="remainAttempts">{{ remainAttempts }}</div>
@@ -202,7 +203,7 @@ export default defineComponent({
             JourneyStore.num_grid === 8 ? 4 : JourneyStore.num_grid
         );
         const queen = useQueenBeauty(videoRef, cameraStream);
-        
+
         // 增强摄像头管理
         const startCamera = async () => {
             try {
@@ -210,7 +211,7 @@ export default defineComponent({
                 if (cameraStream.value) {
                     cameraStream.value.getTracks().forEach(track => track.stop());
                 }
-                
+
                 if (videoRef.value) {
                     queen.startQueenEngine();
                     // 确保视频元素可见
@@ -513,7 +514,18 @@ video {
     z-index: 2;
 }
 
+.btn.disabled {
+    filter: grayscale(100%);
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
 
+/* 保持原有激活状态样式 */
+.btn:active:not(.disabled) {
+    transform: scale(0.95);
+    opacity: 0.8;
+}
 
 .left {
     /* 自动布局子元素 */
