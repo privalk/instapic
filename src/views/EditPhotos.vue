@@ -299,7 +299,7 @@ export default defineComponent({
                 ctx.restore();
 
             });
-            ctx.drawImage(frameOriginal, 0, 0);
+            // ctx.drawImage(frameOriginal, 0, 0);
             canvas.toBlob(blob => {
                 if (blob) {
 

@@ -25,6 +25,7 @@ export const useJourneyStore = defineStore('journey', {
         capturedPhoto: null as string | null,  // 存储单张照片的base64
         remainAttempts_selectFrame: 1 as number, // 剩余拍摄次数
         filterPhoto: null as string | null, // 过滤后的照片
+        filterAndFramePhoto: null as string | null, // 过滤后相框的照片
         PasterPhoto: null as string | null, // 贴纸后照片
         PasterPhotoBlob: null as Blob | null, // 贴纸后照片
         PrintNum: 1 as number, // 打印数量
@@ -100,15 +101,15 @@ export const useJourneyStore = defineStore('journey', {
             }
 
         },
-        setCapturedPhoto(base64Data: string) {
-            this.capturedPhoto = base64Data
-            this.filterPhoto = base64Data
+        setCapturedPhoto(url: string) {
+            this.capturedPhoto = url
+            this.filterPhoto = url
         },
         clearCapturedPhoto() {
             this.capturedPhoto = null
         },
-        setPasterPhoto(base64Data: string) {
-            this.PasterPhoto = base64Data
+        setPasterPhoto(url: string) {
+            this.PasterPhoto = url
         },
         clearPasterPhoto() {
             this.PasterPhoto = null
@@ -118,6 +119,12 @@ export const useJourneyStore = defineStore('journey', {
         },
         clearPasterPhotoBlob() {
             this.PasterPhotoBlob = null
+        },
+        setfilterAndFramePhoto(url:string){
+            this.filterAndFramePhoto = url
+        },
+        clearfilterAndFramePhoto(){
+            this.filterAndFramePhoto = null
         },
         setFilter(filter: string) {
             if (!this.capturedPhoto) {

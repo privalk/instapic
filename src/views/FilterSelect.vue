@@ -17,6 +17,7 @@
 
         <div class="body">
             <div class="left">
+                <img :src="selectedFrameUrl" class="FramePreview" />
                 <img :src="filterPhoto ?? ''" class="FilterPreview" :style="{ filter: activeFilter }" />
                 <img src="\FilterSelect\btn_Next.png" class="btn" @click="handleConfirm" />
             </div>
@@ -51,6 +52,9 @@ export default defineComponent({
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_GridSelect);
         const timeAll = ref(configStore.WaitTime_GridSelect);
+        const selectedFrameUrl = computed(() => {
+            return JourneyStore.selectedFrameUrl
+        })
         const sliderValue = computed(() => {
             return timeLeft.value;
         })
@@ -62,7 +66,53 @@ export default defineComponent({
             const secs = timeLeft.value % 60;
             return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         });
+        const capturedHD = async () => {
+            console.log('开始拼图')
+            const frameElement = document.querySelector('.FramePreview') as HTMLImageElement;
+            if (!frameElement || !JourneyStore.filterPhoto) {
+                console.log('没有找到FramePreview')
+                return;
+            }
 
+            const frameOriginal = await loadImage(frameElement.src);
+            const photoOriginal = await loadImage(JourneyStore.filterPhoto);
+            const canvas = document.createElement('canvas');
+            canvas.width = frameOriginal.naturalWidth;
+            canvas.height = frameOriginal.naturalHeight;
+            const ctx = canvas.getContext('2d')!;
+
+            ctx.drawImage(photoOriginal, 0, 0);
+            ctx.drawImage(frameOriginal, 0, 0);
+            canvas.toBlob(blob => {
+                if (blob) {
+
+                    JourneyStore.setfilterAndFramePhoto(URL.createObjectURL(blob));
+                    JourneyStore.setPasterPhoto(URL.createObjectURL(blob));
+                } else {
+                    console.error('Blob 创建失败');
+                }
+            }, 'image/png', 1);
+
+            console.log('拼图完成')
+        }
+
+        // 图片加载器（增强版）
+        const loadImage = (src: string): Promise<HTMLImageElement> => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous'; // 添加 CORS 属性
+                img.decoding = 'async'; // 启用异步解码
+                img.src = src;
+
+                img.onload = () => {
+                    if (img.naturalWidth === 0) {
+                        reject(new Error('图片加载异常'));
+                    }
+                    resolve(img);
+                };
+                img.onerror = (e) => reject(e);
+            });
+        };
         // 启动定时器
         onMounted(() => {
             console.log(JourneyStore.capturedPhoto)
@@ -102,18 +152,24 @@ export default defineComponent({
                 // 应用新滤镜
                 selectedFilterKey.value = filterKey;
                 activeFilter.value = filters.value[filterKey];
+
             }
         };
 
-        const handleConfirm = () => {
-            // 处理确认逻辑
+        const handleConfirm = async () => {
+
             console.log('Selected filter:', activeFilter.value);
-            JourneyStore.setFilter(activeFilter.value);
+            await JourneyStore.setFilter(activeFilter.value);
+            await capturedHD();
             router.push({
                 name: 'Paster'
             });
         };
-        return { formattedTime, filterPhoto, applyFilter, activeFilter, filters, handleConfirm, selectedFilterKey, sliderValue, timeAll };
+        return {
+            formattedTime, filterPhoto, applyFilter,
+            activeFilter, filters, handleConfirm, selectedFilterKey, sliderValue, timeAll,
+            selectedFrameUrl
+        };
     },
 });
 </script>
@@ -126,6 +182,16 @@ export default defineComponent({
 
 
     z-index: 0;
+}
+
+.FramePreview {
+    position: absolute;
+
+    top: 190px;
+
+    width: 426px;
+    height: 629px;
+    z-index: 1;
 }
 
 .left {
