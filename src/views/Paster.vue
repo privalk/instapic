@@ -2,7 +2,7 @@
     <v-container fluid class="container">
         <div v-for="(sticker, index) in stickers" :key="index" class="draggable-sticker"
             :style="getStickerStyle(sticker)" @touchstart="handleTouchStart(index)" @touchend="handleTouchEnd(index)"
-            @dblclick="removeSticker(index)">
+            >
             <img :src="sticker.src" />
         </div>
         <div class="header">
@@ -84,6 +84,13 @@ export default defineComponent({
         TimeSlider
     },
     setup() {
+
+        const tapState = ref({
+            count: 0,
+            lastTime: 0,
+            currentIndex: -1
+        });
+
         const authStore = useAuthStore();
         const journeyStore = useJourneyStore();
         // 根据num_grid动态选择贴纸库
@@ -225,18 +232,34 @@ export default defineComponent({
         const currentIndex = ref(-1);
 
         const handleTouchStart = (index: number) => {
-            currentIndex.value = index;
+            tapState.value.currentIndex = index;
         };
 
         const handleTouchEnd = (index: number) => {
             const now = Date.now();
-            const DOUBLE_PRESS_DELAY = 300;
+            const TRIPLE_TAP_DELAY = 300; // 300ms时间窗口
 
-            if (lastTap.value && (now - lastTap.value) < DOUBLE_PRESS_DELAY) {
-                removeSticker(index);
-                lastTap.value = 0;
+            // 重置条件：超过时间间隔 或 不同贴纸
+            if (now - tapState.value.lastTime > TRIPLE_TAP_DELAY || tapState.value.currentIndex !== index) {
+                tapState.value = {
+                    count: 1,
+                    lastTime: now,
+                    currentIndex: index
+                };
             } else {
-                lastTap.value = now;
+                tapState.value.count += 1;
+                tapState.value.lastTime = now;
+
+                // 检测到第三次点击
+                if (tapState.value.count === 3) {
+                    removeSticker(index);
+                    // 重置计数器
+                    tapState.value = {
+                        count: 0,
+                        lastTime: 0,
+                        currentIndex: -1
+                    };
+                }
             }
         };
 
