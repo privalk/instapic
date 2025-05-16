@@ -24,7 +24,7 @@
 
             <div class="right">
                 <div class="cameraArea">
-                    <video ref="videoElement" class="video-preview" autoplay playsinline></video>
+                    <video ref="videoElement" class="video-preview" :style="{ transform: 'scaleX(-1)' }" autoplay playsinline></video>
                     <!-- <canvas ref="canvasElement" class="canvas-preview"></canvas> -->
                 </div>
                 <img class="btn_startPhoto" src="\BeautyFilter\btn_startPhoto.svg" @click="handleStartPhoto" />
@@ -84,7 +84,7 @@ export default defineComponent({
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
                 } else {
-
+                    handleStartPhoto();
                     clearInterval(timer);
                 }
             }, 1000);

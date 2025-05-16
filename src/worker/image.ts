@@ -5,10 +5,14 @@ import type { ImageProcessor } from './types';
 const api: ImageProcessor = {
   async processFrame(
     bitmap: ImageBitmap,
-    options: { quality: number; mirror: boolean }
+    options: {
+      quality: number;
+      mirror: boolean;
+      aspectRatio: number;
+    }
   ): Promise<Blob> {
-    const targetAspect = 361 / 538; // 根据实际预览区域比例修改
-    
+    const targetAspect = options.aspectRatio;
+
     // 计算最大裁剪区域
     let cropWidth, cropHeight;
     if (bitmap.width / bitmap.height > targetAspect) {
@@ -28,7 +32,7 @@ const api: ImageProcessor = {
     // 创建裁剪画布
     const cropCanvas = new OffscreenCanvas(cropWidth, cropHeight);
     const ctx = cropCanvas.getContext('2d')!;
-    
+
     // 镜像处理
     if (options.mirror) {
       ctx.translate(cropWidth, 0);
@@ -45,11 +49,11 @@ const api: ImageProcessor = {
       cropWidth,       // 目标绘制宽度
       cropHeight       // 目标绘制高度
     );
-    
+
     bitmap.close();
 
     return cropCanvas.convertToBlob({
-      type: 'image/jpeg',
+      type: 'image/png',
       quality: options.quality
     });
   }

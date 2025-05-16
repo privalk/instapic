@@ -23,7 +23,6 @@
                         <template v-slot:default="{ item }">
                             <div class="item">
                                 <img :src="item" />
-
                             </div>
                         </template>
                     </v-virtual-scroll>
@@ -32,7 +31,7 @@
             </div>
             <div class="middle">
 
-                <div class="cameraArea">
+                <div class="cameraArea" :style="cameraSize">
                     <div v-if="isProcessing" class="processing-overlay">
                         <v-progress-circular indeterminate></v-progress-circular>
                     </div>
@@ -82,17 +81,35 @@ import { useJourneyStore } from '@/stores/journey';
 import type { ImageProcessor } from '@/worker/types';
 import type { VVirtualScroll } from 'vuetify/components/VVirtualScroll';
 import TimeSlider from '@/components/TimeSlider.vue'
+import { useQueenBeauty } from '@/composables/useBeautyCamera';
 export default defineComponent({
     components: {
         TimeSlider
     },
     setup() {
+        const cameraSize = computed(() => {
+            switch (JourneyStore.num_grid) {
+                case 1:
+                    return { width: '523.832px', height: '700px' };
+                case 2:
+                    return { width: '600px', height: '359.702px' };
+
+                case 4:
+                    return { width: '523.659px', height: '700px' };
+                case 6:
+                    return { width: '600px', height: '600px' };
+
+                case 8:
+                    return { width: '600px', height: '449.417px' };
+
+            }
+        });
         const isProcessing = ref(false);
         const videoRef = ref<HTMLVideoElement | null>(null);
         const canvasRef = ref<HTMLCanvasElement | null>(null);
+        const cameraStream = ref<MediaStream | null>(null);
         const scrollRef = ref<typeof VVirtualScroll>();
         let pendingScroll = false;
-        let stream: MediaStream | null = null;
 
         const configStore = useConfigStore();
         const timeLeft = ref(configStore.WaitTime_TakePhoto);
@@ -184,25 +201,18 @@ export default defineComponent({
         const num_photoToTakeAll = computed(() =>
             JourneyStore.num_grid === 8 ? 4 : JourneyStore.num_grid
         );
-
+        const queen = useQueenBeauty(videoRef, cameraStream);
+        
         // 增强摄像头管理
         const startCamera = async () => {
             try {
                 // 先停止旧流（新增）
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
+                if (cameraStream.value) {
+                    cameraStream.value.getTracks().forEach(track => track.stop());
                 }
-                const videoConstraints = {
-                    width: { ideal: 4096 }, // 优先选择4K分辨率
-                    height: { ideal: 2160 },
-                    advanced: [{ aspectRatio: 16 / 9 }] // 根据实际预览容器比例调整
-                };
-
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: videoConstraints
-                });
+                
                 if (videoRef.value) {
-                    videoRef.value.srcObject = stream;
+                    queen.startQueenEngine();
                     // 确保视频元素可见
                     videoRef.value.style.display = 'block';
                 }
@@ -234,20 +244,24 @@ export default defineComponent({
             let bitmap: ImageBitmap | null = null;
 
             try {
+                const video = videoRef.value!;
+                const displayWidth = video.clientWidth;
+                const displayHeight = video.clientHeight;
                 bitmap = await createImageBitmap(videoRef.value!);
                 const blob = await imageWorker.processFrame(
                     Comlink.transfer(bitmap, [bitmap]),
-                    { quality: 1, mirror: true }
+                    { quality: 1, mirror: true, aspectRatio: displayWidth / displayHeight }
                 );
                 const image = new Image();
                 image.src = URL.createObjectURL(blob);
                 await new Promise((resolve) => (image.onload = resolve));
 
                 if (canvasRef.value) {
+                    // 根据显示尺寸设置canvas
+                    canvasRef.value.width = displayWidth;
+                    canvasRef.value.height = displayHeight;
                     const ctx = canvasRef.value.getContext('2d')!;
-                    canvasRef.value.width = 361;
-                    canvasRef.value.height = 538;
-                    ctx.drawImage(image, 0, 0, 361, 538);
+                    ctx.drawImage(image, 0, 0, displayWidth, displayHeight);
                 }
 
                 // 直接添加到照片数组
@@ -262,6 +276,7 @@ export default defineComponent({
         // 4. 按钮处理函数
         const handleNextTake = () => {
             num_photoToTakeNow.value++;
+            JourneyStore.remainAttempts_takePhotos = 2;
             if (num_photoToTakeNow.value <= num_photoToTakeAll.value) {
                 startCountdown();
             }
@@ -297,7 +312,7 @@ export default defineComponent({
 
         onUnmounted(() => {
             clearInterval(timer);
-            stream?.getTracks().forEach(track => track.stop());
+            queen.cleanupQueenEngine();
         });
 
 
@@ -313,7 +328,8 @@ export default defineComponent({
             timeLeft,
             items: JourneyStore.photos,
             handleNextTake,
-            handleRetake, isProcessing, scrollRef, handleScrollUpdate, handleConfirm
+            handleRetake, isProcessing, scrollRef, handleScrollUpdate, handleConfirm,
+            cameraSize
         };
     },
 
@@ -334,8 +350,8 @@ export default defineComponent({
     position: absolute;
     top: 0;
     left: 0;
-    width: 361px;
-    height: 538px;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
 
 }
@@ -415,7 +431,7 @@ export default defineComponent({
     margin-bottom: 30px;
     /* 自动布局子元素 */
     width: 167px;
-    height: 223px;
+    height: auto;
     /* 自动布局 */
     display: flex;
     flex-direction: column;
@@ -438,8 +454,6 @@ export default defineComponent({
 
 .cameraArea {
     position: relative;
-    width: 361px;
-    height: 538px;
     overflow: hidden;
     border-radius: 24px;
     border: 10px solid rgba(0, 0, 0, 0.2);

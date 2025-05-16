@@ -17,6 +17,7 @@ export function useQueenBeauty(videoElementRef: Ref<HTMLVideoElement | null>, ca
             queenEngine.init(
                 sdkLicenseKey,
                 () => {
+                    console.log('beautyStrength:'+journeyStore.beautyStrength);
                     queenEngine.setQueenBeautyType(kQueenBeautyType.SkinBuffing, true);
                     queenEngine.setQueenBeautyParams(kQueenBeautyParams.SkinBuffing, journeyStore.beautyStrength);
 
