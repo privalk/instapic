@@ -35,6 +35,9 @@
                     <div v-if="isProcessing" class="processing-overlay">
                         <v-progress-circular indeterminate></v-progress-circular>
                     </div>
+                    <div v-show="timeLeft <= 10 && timeLeft > 0" class="countdown-number">
+                        {{ timeLeft }}
+                    </div>
                     <video ref="videoRef" autoplay playsinline :style="{ transform: 'scaleX(-1)' }"></video>
                     <!-- 添加用于显示最后拍摄照片的canvas -->
                     <canvas ref="canvasRef" class="fixed-canvas"></canvas>
@@ -339,6 +342,24 @@ export default defineComponent({
 
 
 <style scoped>
+.countdown-number {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    font-family: DIN;
+    font-size: 240px;
+    font-weight: bold;
+    background: linear-gradient(180deg, rgba(119, 68, 255, 0.5) 0%, rgba(243, 255, 149, 0.5) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    /* text-fill-color: transparent; */
+    pointer-events: none;
+    /* 防止点击阻挡摄像头操作 */
+}
+
 .processing-overlay {
     position: absolute;
     top: 50%;
