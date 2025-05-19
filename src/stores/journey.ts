@@ -13,7 +13,7 @@ export const useJourneyStore = defineStore('journey', {
     state: () => ({
         config: useConfigStore(), // 引入配置文件
         auth: useAuthStore(), // 引入配置文件
-        num_grid:  1 as number, // 宫格数量
+        num_grid: 1 as number, // 宫格数量
         journeyWay: 0 as number, // 体验方式 1:现场拍摄   2：上传 
         price: 35 as number, // 价格
         payWay: '' as string, // 支付方式 支付宝 微信支付
@@ -28,7 +28,7 @@ export const useJourneyStore = defineStore('journey', {
         filterAndFramePhoto: null as string | null, // 过滤后相框的照片
         PasterPhoto: null as string | null, // 贴纸后照片
         PasterPhotoBlob: null as Blob | null, // 贴纸后照片
-        PrintNum: 1 as number, // 打印数量
+        PrintNum: 2 as number, // 打印数量
         overPrintPrice: 10 as number, // 额外打印价格
         overPrintPriceAllToPay: 0 as number, // 额外打印价格总计
 
@@ -40,7 +40,7 @@ export const useJourneyStore = defineStore('journey', {
         order_add_id: '' as string, // 订单附加ID
         payment: [] as payment[], // 支付方式
 
-        beautyStrength:0 as number, // 美颜强度
+        beautyStrength: 0 as number, // 美颜强度
 
     }),
 
@@ -55,9 +55,9 @@ export const useJourneyStore = defineStore('journey', {
             this.filterPhoto = null;
             this.PasterPhoto = null;
             this.PasterPhotoBlob = null;
-            this.filterAndFramePhoto=null;
-            this.PrintNum = 1;
-            this.journey_id= '';
+            this.filterAndFramePhoto = null;
+            this.PrintNum = 2;
+            this.journey_id = '';
             this.order_id = '';
             this.order_add_id = '';
             this.payment = [];
@@ -73,20 +73,24 @@ export const useJourneyStore = defineStore('journey', {
             if (this.config?.remainAttempts_selectFrame !== undefined) {
                 this.remainAttempts_selectFrame = this.config.remainAttempts_selectFrame;
             }
-          
+
         },
         clearPhotos() {
             this.photos = [];
         },
         Select_GridNum(num: number) {
+            // console.log(num)
             this.num_grid = num;
+            if (num === 8) {
+                this.PrintNum = 1;
+            }
             router.push({ name: 'WaySelect' });
         },
         Select_Way(num: number) {
             this.journeyWay = num;
             router.push({
                 name: 'PaySelect',
-                params: { isAdd: 'false',isCouponed: 'false' }
+                params: { isAdd: 'false', isCouponed: 'false' }
             });
         },
         decrementAttempt(type: string) {  // 新增响应式修改方法
@@ -121,10 +125,10 @@ export const useJourneyStore = defineStore('journey', {
         clearPasterPhotoBlob() {
             this.PasterPhotoBlob = null
         },
-        setfilterAndFramePhoto(url:string){
+        setfilterAndFramePhoto(url: string) {
             this.filterAndFramePhoto = url
         },
-        clearfilterAndFramePhoto(){
+        clearfilterAndFramePhoto() {
             this.filterAndFramePhoto = null
         },
 
@@ -137,14 +141,28 @@ export const useJourneyStore = defineStore('journey', {
             document.body.removeChild(link);
         },
         addPrintNum() {
-            this.PrintNum++;
-            this.overPrintPriceAllToPay = (this.PrintNum - 1) * this.overPrintPrice;
+            if (this.num_grid === 8) {
+                this.PrintNum++;
+                this.overPrintPriceAllToPay = (this.PrintNum - 1) * this.overPrintPrice;
+            } else {
+                this.PrintNum++;
+                this.overPrintPriceAllToPay = (this.PrintNum - 2) * this.overPrintPrice;
+            }
         },
         minusPrintNum() {
-            if (this.PrintNum > 1) {
-                this.PrintNum--;
-                this.overPrintPriceAllToPay = (this.PrintNum - 1) * this.overPrintPrice;
+            if (this.num_grid === 8) {
+                if (this.PrintNum > 1) {
+                    this.PrintNum--;
+                    this.overPrintPriceAllToPay = (this.PrintNum - 1) * this.overPrintPrice;
+                }
             }
+            else {
+                if (this.PrintNum > 2) {
+                    this.PrintNum--;
+                    this.overPrintPriceAllToPay = (this.PrintNum - 2) * this.overPrintPrice;
+                }
+            }
+
         },
 
         async JourneyCreation() {

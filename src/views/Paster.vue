@@ -1,8 +1,7 @@
 <template>
     <v-container fluid class="container">
         <div v-for="(sticker, index) in stickers" :key="index" class="draggable-sticker"
-            :style="getStickerStyle(sticker)" @touchstart="handleTouchStart(index)" @touchend="handleTouchEnd(index)"
-            >
+            :style="getStickerStyle(sticker)" @touchstart="handleTouchStart(index)" @touchend="handleTouchEnd(index)">
             <img :src="sticker.src" />
         </div>
         <div class="header">
@@ -227,9 +226,7 @@ export default defineComponent({
         });
         const overPrintPriceAllToPay = computed(() => (journeyStore.overPrintPriceAllToPay / 100).toFixed(2));
 
-        // 双击检测逻辑
-        const lastTap = ref(0);
-        const currentIndex = ref(-1);
+
 
         const handleTouchStart = (index: number) => {
             tapState.value.currentIndex = index;
@@ -374,15 +371,29 @@ export default defineComponent({
         // 打印执行
         const handleprintImage = async () => {
             await captureHD();
-            if (PrintNum.value == 1) {
-                router.push({ name: 'PrintAndGet' });
+            if (journeyStore.num_grid === 8) {
+                if (PrintNum.value == 1) {
+                    router.push({ name: 'PrintAndGet' });
+                }
+                else {
+                    router.push({
+                        name: "PaySelect",
+                        params: { isAdd: 'true', isCouponed: 'false' }
+                    })
+                }
             }
             else {
-                router.push({
-                    name: "PaySelect",
-                    params: { isAdd: 'true', isCouponed: 'false' }
-                })
+                if (PrintNum.value == 2) {
+                    router.push({ name: 'PrintAndGet' });
+                }
+                else {
+                    router.push({
+                        name: "PaySelect",
+                        params: { isAdd: 'true', isCouponed: 'false' }
+                    })
+                }
             }
+
 
 
         }

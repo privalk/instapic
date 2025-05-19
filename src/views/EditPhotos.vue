@@ -83,7 +83,7 @@ export default defineComponent({
                 src: photo,
                 x: 0,
                 y: 0,
-                scale: 2,
+                scale: 1,
                 rotate: 0,
                 opacity: 1
             }))
@@ -260,7 +260,7 @@ export default defineComponent({
 
             // 容器相对于视口的位置
             const containerRect = canvasContainer.value.getBoundingClientRect();
-            console.log('容器相对于视口的位置:', containerRect);
+            // console.log('容器相对于视口的位置:', containerRect);
             // 先绘制相框背景（可选，根据需求）
             // ctx.drawImage(frameOriginal, 0, 0);
 
@@ -272,11 +272,11 @@ export default defineComponent({
                 // 获取元素实际位置（相对于容器）
                 const imgX = imgData.x + containerRect.left;
                 const imgY = imgData.y + containerRect.top;
-                console.log('图片实际位置:', imgX, imgY);
+                // console.log('图片实际位置:', imgX, imgY);
                 // 转换为相框坐标系统
                 const originX = (imgX - frameDisplayRect.left) * scaleX;
                 const originY = (imgY - frameDisplayRect.top) * scaleY;
-                console.log('图片在相框中的位置:', originX, originY);
+                // console.log('图片在相框中的位置:', originX, originY);
                 // 计算缩放比例（考虑原图尺寸与显示尺寸）
                 const displayWidth = 200; // CSS中定义的图片宽度
                 const imgRatio = originalImg.naturalWidth / displayWidth;
