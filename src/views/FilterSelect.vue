@@ -1,5 +1,6 @@
 <template>
     <v-container fluid class="container">
+        <!-- <button class="test-btn" @click="loadTestPhoto">加载测试照片</button> -->
         <div class="header">
             <TimeSlider v-model="sliderValue" :max="timeAll" style="position: absolute;" />
             <div class="btn_back">
@@ -7,6 +8,7 @@
             </div>
             <img src="\FilterSelect\title_FilterSelect.svg" />
             <div class="time">
+
                 <!-- <div class="time2">
                     <div class="time3">
                         {{ formattedTime }}
@@ -18,7 +20,7 @@
         <div class="body">
             <div class="left">
                 <img :src="selectedFrameUrl" class="FramePreview" />
-                <img :src="filterPhoto ?? ''" class="FilterPreview" :style="{ filter: activeFilter }" />
+                <img :src="filterPhoto ?? ''" class="FilterPreview" />
                 <img src="\FilterSelect\btn_Next.png" class="btn" @click="handleConfirm" />
             </div>
             <div class="right">
@@ -43,7 +45,16 @@ import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
 import TimeSlider from '@/components/TimeSlider.vue'
+import { nextTick } from 'process';
 type FilterKey = 'filter_1' | 'filter_2' | 'filter_3' | 'filter_4' | 'filter_5';
+// 定义合法的混合模式类型
+type BlendMode = GlobalCompositeOperation | null;
+
+// 配置对象类型
+type FilterConfig = {
+    mask: string | null;
+    blendMode: BlendMode;
+};
 export default defineComponent({
     components: {
         TimeSlider
@@ -115,7 +126,10 @@ export default defineComponent({
         };
         // 启动定时器
         onMounted(() => {
-            console.log(JourneyStore.capturedPhoto)
+            nextTick(() => {
+                console.log(JourneyStore.capturedPhoto)
+            })
+
             timer = setInterval(() => {
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
@@ -137,30 +151,122 @@ export default defineComponent({
         const filters = ref({
             filter_1: 'saturate(1.2) brightness(1.1) contrast(1.05)',
             filter_2: 'contrast(1.3) saturate(0.9)',
-            filter_3: 'brightness(1.05) contrast(1.2) saturate(1.1)',
+            filter_3: 'blur(2.5px) brightness(120%) contrast(150%)  hue-rotate(5deg) saturate(80%) grayscale(50%) sepia(70%)',
             filter_4: 'sepia(0.6) contrast(1.1) brightness(0.95)',
             filter_5: 'grayscale(100%)'
         });
+        const filterConfigs: Record<FilterKey, FilterConfig> = {
+            filter_1: { mask: null, blendMode: null },
+            filter_2: { mask: null, blendMode: null },
+            filter_3: {
+                mask: '/FilterSelect/Filter_3_mask.png',
+                blendMode: 'screen'
+            },
+            filter_4: { mask: null, blendMode: null },
+            filter_5: { mask: null, blendMode: null },
+        };
+        const loadTestPhoto = () => {
+            // 这里替换为你的测试照片路径
+            const testPhotoURL = '/FilterSelect/20250516-185423.jpg';
+
+            // 更新store状态
+            JourneyStore.capturedPhoto = testPhotoURL;
+            JourneyStore.filterPhoto = testPhotoURL;
+
+            // 重置滤镜选择
+            selectedFilterKey.value = null;
+            activeFilter.value = '';
+
+            console.log('测试照片已加载');
+        };
         const activeFilter = ref('');
         const selectedFilterKey = ref<FilterKey | null>(null);
-        const applyFilter = (filterKey: FilterKey) => {
+        const applyFilter = async (filterKey: FilterKey) => {
             if (selectedFilterKey.value === filterKey) {
-                // 第二次点击相同滤镜时取消
+                // 取消选择时恢复原图
                 selectedFilterKey.value = null;
                 activeFilter.value = '';
+                JourneyStore.filterPhoto = JourneyStore.capturedPhoto || '';
             } else {
                 // 应用新滤镜
                 selectedFilterKey.value = filterKey;
                 activeFilter.value = filters.value[filterKey];
 
+                // 立即生成预览图
+                try {
+                    const success = await setFilter(activeFilter.value);
+                    if (!success) {
+                        console.error('滤镜应用失败');
+                        JourneyStore.filterPhoto = JourneyStore.capturedPhoto || '';
+                    }
+                } catch (error) {
+                    console.error('滤镜处理异常:', error);
+                }
+            }
+        };
+
+        // 优化后的 setFilter 函数
+        const setFilter = async (filter: string) => {
+            if (!JourneyStore.capturedPhoto) return false;
+
+            const filterKey = selectedFilterKey.value;
+            const config = filterKey ? filterConfigs[filterKey] : { mask: null, blendMode: null };
+            console.log('filterKey', filterKey);
+            console.log('config', config)
+            try {
+                // 并行加载资源
+                const [srcImage, maskImage] = await Promise.all([
+                    loadImage(JourneyStore.capturedPhoto!),
+                    config.mask ? loadImage(config.mask) : null
+                ]);
+
+                // 创建画布
+                const canvas = document.createElement('canvas');
+                canvas.width = srcImage.width;
+                canvas.height = srcImage.height;
+                const ctx = canvas.getContext('2d')!;
+
+                // 分步骤应用效果
+                ctx.save();
+
+                // 应用基础滤镜
+                ctx.filter = filter;
+                ctx.drawImage(srcImage, 0, 0);
+
+                // 应用混合遮罩
+                if (config.blendMode && maskImage) {
+                    ctx.globalCompositeOperation = config.blendMode;
+                    ctx.drawImage(maskImage, 0, 0, canvas.width, canvas.height);
+                }
+
+                ctx.restore();
+
+                // 更新预览图
+                return new Promise<boolean>((resolve) => {
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            const blobURL = URL.createObjectURL(blob);
+
+
+                            JourneyStore.filterPhoto = blobURL;
+                            JourneyStore.PasterPhoto = blobURL;
+                            JourneyStore.PasterPhotoBlob = blob;
+                            resolve(true);
+                        } else {
+                            resolve(false);
+                        }
+                    }, 'image/png');
+                });
+            } catch (error) {
+                console.error('图像处理失败:', error);
+                return false;
             }
         };
 
         const handleConfirm = async () => {
 
-            console.log('Selected filter:', activeFilter.value);
-            await JourneyStore.setFilter(activeFilter.value);
-            await capturedHD();
+
+
             router.push({
                 name: 'Paster'
             });
@@ -168,17 +274,38 @@ export default defineComponent({
         return {
             formattedTime, filterPhoto, applyFilter,
             activeFilter, filters, handleConfirm, selectedFilterKey, sliderValue, timeAll,
-            selectedFrameUrl
+            selectedFrameUrl, loadTestPhoto
         };
     },
 });
 </script>
 
 <style scoped>
+.test-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: #8945FF;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    z-index: 999;
+}
+
+.test-btn:hover {
+    background: #6a30cc;
+}
+
+.test-btn:active {
+    transform: scale(0.95);
+}
+
 .FilterPreview {
     /* 自动布局子元素 */
-    width: 426px;
-    height: 629px;
+    width: 480px;
+    height: 715px;
 
 
     z-index: 0;
@@ -187,10 +314,10 @@ export default defineComponent({
 .FramePreview {
     position: absolute;
 
-    top: 190px;
+    top: 147.5px;
 
-    width: 426px;
-    height: 629px;
+    width: 480px;
+    height: 715px;
     z-index: 1;
 }
 

@@ -17,7 +17,7 @@
         <div class="body" ref="canvasContainer">
 
             <div v-for="(img, index) in images" :key="index" class="draggable-image" :style="getImageStyle(img)">
-                <img :src="img.src" :style="{ opacity: img.opacity }"  @contextmenu.prevent />
+                <img :src="img.src" :style="{ opacity: img.opacity }" @contextmenu.prevent />
             </div>
 
             <div class="left">
@@ -83,7 +83,7 @@ export default defineComponent({
                 src: photo,
                 x: 0,
                 y: 0,
-                scale: 1,
+                scale: 2,
                 rotate: 0,
                 opacity: 1
             }))
@@ -111,7 +111,8 @@ export default defineComponent({
         const getImageStyle = (img: DraggableImage) => ({
             left: `${img.x}px`,
             top: `${img.y}px`,
-            transform: `scale(${img.scale}) rotate(${img.rotate}deg)`,
+
+            transform: `translate(-50%, -50%) scale(${img.scale}) rotate(${img.rotate}deg)`,
         })
         // Interact.js 初始化
         onMounted(() => {
@@ -235,61 +236,55 @@ export default defineComponent({
         const captureHD = async () => {
             console.log('开始截图')
             const frameElement = document.querySelector('.PhotoFrame') as HTMLImageElement;
-            if (!frameElement) return;
+            if (!frameElement || !canvasContainer.value) return;
 
+            // 加载相框原图
             const frameOriginal = await loadImage(frameElement.src);
 
+            // 创建画布（使用相框原始尺寸）
             const canvas = document.createElement('canvas');
             canvas.width = frameOriginal.naturalWidth;
             canvas.height = frameOriginal.naturalHeight;
             const ctx = canvas.getContext('2d')!;
 
-
+            // 计算缩放比例（相框显示尺寸到原始尺寸）
             const frameDisplayRect = frameElement.getBoundingClientRect();
+            console.log('相框显示尺寸:', frameDisplayRect);
             const scaleX = frameOriginal.naturalWidth / frameDisplayRect.width;
             const scaleY = frameOriginal.naturalHeight / frameDisplayRect.height;
-
+            console.log('缩放比例:', scaleX, scaleY);
+            // 加载所有拖拽图片
             const dragImgs = await Promise.all(
                 images.value.map(img => loadImage(img.src))
             );
 
+            // 容器相对于视口的位置
+            const containerRect = canvasContainer.value.getBoundingClientRect();
+            console.log('容器相对于视口的位置:', containerRect);
+            // 先绘制相框背景（可选，根据需求）
+            // ctx.drawImage(frameOriginal, 0, 0);
+
+            // 绘制所有图片
             images.value.forEach((imgData, index) => {
                 const originalImg = dragImgs[index];
-                if (!originalImg || !canvasContainer.value) {
-                    console.log(originalImg, canvasContainer.value)
-                    console.error('无法获取原始图片或canvasContainer');
-                    return;
-                }
+                if (!originalImg) return;
 
-                // 获取相框在容器内的相对位置
-                const frameRect = frameElement.getBoundingClientRect();
-                const containerRect = canvasContainer.value.getBoundingClientRect();
-                const frameLeftInContainer = frameRect.left - containerRect.left;
-                const frameTopInContainer = frameRect.top - containerRect.top;
+                // 获取元素实际位置（相对于容器）
+                const imgX = imgData.x + containerRect.left;
+                const imgY = imgData.y + containerRect.top;
+                console.log('图片实际位置:', imgX, imgY);
+                // 转换为相框坐标系统
+                const originX = (imgX - frameDisplayRect.left) * scaleX;
+                const originY = (imgY - frameDisplayRect.top) * scaleY;
+                console.log('图片在相框中的位置:', originX, originY);
+                // 计算缩放比例（考虑原图尺寸与显示尺寸）
+                const displayWidth = 200; // CSS中定义的图片宽度
+                const imgRatio = originalImg.naturalWidth / displayWidth;
+                const actualScale = imgData.scale * scaleX / imgRatio;
 
-                // 将用户坐标转换为相框内坐标
-                const frameRelativeX = imgData.x - frameLeftInContainer;
-                const frameRelativeY = imgData.y - frameTopInContainer;
-
-                // 映射到画布坐标
-                const originX = frameRelativeX * scaleX;
-                const originY = frameRelativeY * scaleY;
-
-                // 计算实际显示尺寸
-                const scaledDisplayWidth = 200 * imgData.scale;
-                const scaledDisplayHeight = (200 * imgData.scale * originalImg.naturalHeight) / originalImg.naturalWidth;
-
-                // 转换缩放比例
-                const originalImgDisplayWidth = 200;
-                const imgScaleRatio = originalImg.naturalWidth / originalImgDisplayWidth;
-                const actualScale = (imgData.scale * scaleX) / imgScaleRatio;
-
-                // 应用变换（中心点修正）
+                // 应用变换
                 ctx.save();
-                ctx.translate(
-                    originX + (scaledDisplayWidth * scaleX) / 2,
-                    originY + (scaledDisplayHeight * scaleY) / 2
-                );
+                ctx.translate(originX, originY);
                 ctx.rotate(imgData.rotate * Math.PI / 180);
                 ctx.scale(actualScale, actualScale);
                 ctx.drawImage(
@@ -298,12 +293,11 @@ export default defineComponent({
                     -originalImg.naturalHeight / 2
                 );
                 ctx.restore();
-
             });
-            // ctx.drawImage(frameOriginal, 0, 0);
+
+            // 生成最终图片
             canvas.toBlob(blob => {
                 if (blob) {
-
                     JourneyStore.setCapturedPhoto(URL.createObjectURL(blob));
                 } else {
                     console.error('Blob 创建失败');
@@ -448,8 +442,8 @@ export default defineComponent({
 
 .PhotoFrame {
     /* 自动布局子元素 */
-    width: 492px;
-    height: 728px;
+    width: 480px;
+    height: 715px;
     /* 
     pointer-events: none; */
 
@@ -465,11 +459,19 @@ export default defineComponent({
     touch-action: none;
     user-select: none;
     z-index: 2;
+    transform-origin: center center;
+    /* 确保变换基于中心点 */
+    will-change: transform;
+    /* 优化动画性能 */
 }
 
 .draggable-image img {
     width: 200px;
     height: auto;
+    display: block;
+    /* 消除图片底部间隙 */
+    transform-origin: center center;
+    /* 图片变换也基于中心 */
 }
 
 .left {
@@ -669,5 +671,4 @@ export default defineComponent({
     /* 可选：禁用指针事件 */
     /* pointer-events: none; */
 }
-
 </style>

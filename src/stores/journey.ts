@@ -13,7 +13,7 @@ export const useJourneyStore = defineStore('journey', {
     state: () => ({
         config: useConfigStore(), // 引入配置文件
         auth: useAuthStore(), // 引入配置文件
-        num_grid:  8 as number, // 宫格数量
+        num_grid:  1 as number, // 宫格数量
         journeyWay: 0 as number, // 体验方式 1:现场拍摄   2：上传 
         price: 35 as number, // 价格
         payWay: '' as string, // 支付方式 支付宝 微信支付
@@ -22,7 +22,7 @@ export const useJourneyStore = defineStore('journey', {
         selectedFrameUrl: '' as string, // 选中的相框URL
         photos: [] as string[], // 图片数组，用来存放用户拍的照片
         remainAttempts_takePhotos: 2 as number, // 剩余拍摄次数
-        capturedPhoto: null as string | null,  // 存储单张照片的base64
+        capturedPhoto: null as string | null,  // 存储单张照片的blobUrl
         remainAttempts_selectFrame: 1 as number, // 剩余拍摄次数
         filterPhoto: null as string | null, // 过滤后的照片
         filterAndFramePhoto: null as string | null, // 过滤后相框的照片
@@ -55,6 +55,7 @@ export const useJourneyStore = defineStore('journey', {
             this.filterPhoto = null;
             this.PasterPhoto = null;
             this.PasterPhotoBlob = null;
+            this.filterAndFramePhoto=null;
             this.PrintNum = 1;
             this.journey_id= '';
             this.order_id = '';
@@ -126,60 +127,7 @@ export const useJourneyStore = defineStore('journey', {
         clearfilterAndFramePhoto(){
             this.filterAndFramePhoto = null
         },
-        setFilter(filter: string) {
-            if (!this.capturedPhoto) {
-                console.error('No captured photo to apply filter to.');
-                return Promise.resolve(false);
-            };
 
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.src = this.capturedPhoto!;
-
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-
-                    const ctx = canvas.getContext('2d');
-                    if (!ctx) {
-                        resolve(false);
-                        return;
-                    }
-
-                    // 应用滤镜
-                    ctx.filter = filter;
-                    ctx.drawImage(img, 0, 0);
-
-                    // 转换为Blob
-                    canvas.toBlob((blob) => {
-                        if (!blob) {
-                            resolve(false);
-                            return;
-                        }
-
-                        // 生成Blob URL
-                        const blobURL = URL.createObjectURL(blob);
-
-                        // 更新存储的URL
-                        if (this.filterPhoto) {
-                            URL.revokeObjectURL(this.filterPhoto); // 释放之前的Blob URL
-                        }
-
-                        this.filterPhoto = blobURL;
-                        this.PasterPhoto = blobURL;
-                        this.PasterPhotoBlob = blob;
-                        console.log('Filtered blob:', blob);
-                        resolve(true);
-                    }, 'image/png');
-                };
-
-                img.onerror = () => {
-                    console.error('Failed to load image');
-                    resolve(false);
-                };
-            });
-        },
         downloadFilteredImage(blobURL: string) {
             const link = document.createElement('a');
             link.download = `filtered_${Date.now()}.png`;
