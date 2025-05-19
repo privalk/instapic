@@ -153,7 +153,7 @@ export default defineComponent({
             filter_2: 'blur(3px) brightness(1.25) contrast(0.7)  hue-rotate(-5deg) saturate(80%) grayscale(10%) sepia(0%)',
             filter_3: 'blur(2.5px) brightness(1.05) contrast(1)  hue-rotate(5deg) saturate(91%) grayscale(70%) sepia(65%)',
             filter_4: 'blur(3px) brightness(0.8) contrast(1.3)  hue-rotate(-5deg) saturate(120%) grayscale(10%) sepia(10%)',
-            filter_5: 'blur(2px) brightness(1.06) contrast(1)  hue-rotate(0deg) saturate(100%) grayscale(100%) sepia(20%)'
+            filter_5: 'blur(1.2px) brightness(107%) contrast(146%)  hue-rotate(0deg) saturate(101%) grayscale(100%) sepia(15%)'
         });
         const filterConfigs: Record<FilterKey, FilterConfig> = {
             filter_1: { mask: null, blendMode: null },
