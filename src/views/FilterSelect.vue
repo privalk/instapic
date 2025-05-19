@@ -249,8 +249,6 @@ export default defineComponent({
 
 
                             JourneyStore.filterPhoto = blobURL;
-                            JourneyStore.PasterPhoto = blobURL;
-                            JourneyStore.PasterPhotoBlob = blob;
                             resolve(true);
                         } else {
                             resolve(false);
@@ -262,9 +260,51 @@ export default defineComponent({
                 return false;
             }
         };
+        const drawPhotoFrame = async () => {
+            try {
+                // 并行加载资源
+                const [frameImage, filteredImage] = await Promise.all([
+                    loadImage(JourneyStore.selectedFrameUrl!),
+                    loadImage(JourneyStore.filterPhoto!)
+                ]);
 
+                // 创建画布（以相框尺寸为基准）
+                const canvas = document.createElement('canvas');
+                canvas.width = frameImage.width;
+                canvas.height = frameImage.height;
+                const ctx = canvas.getContext('2d')!;
+
+                // 分步绘制合成效果
+                // 1. 绘制滤镜后的照片（适配相框尺寸）
+                ctx.drawImage(
+                    filteredImage,
+                    0, 0, filteredImage.width, filteredImage.height,     // 源尺寸
+                    0, 0, canvas.width, canvas.height                    // 目标尺寸
+                );
+
+                // 2. 叠加相框（带透明通道）
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.drawImage(frameImage, 0, 0);
+
+                // 生成最终结果
+                canvas.toBlob(blob => {
+                    if (blob) {
+                        const blobURL = URL.createObjectURL(blob);
+                        JourneyStore.setPasterPhoto(blobURL);
+                        JourneyStore.setPasterPhotoBlob(blob);
+                        
+                    }
+                }, 'image/png', 1);
+
+                console.log('照片合成完成');
+            } catch (error) {
+                console.error('照片合成失败:', error);
+                // 降级处理：直接使用原始照片
+                JourneyStore.setPasterPhoto(JourneyStore.filterPhoto!);
+            }
+        };
         const handleConfirm = async () => {
-
+            drawPhotoFrame();
 
 
             router.push({
