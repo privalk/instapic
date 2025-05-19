@@ -1,6 +1,6 @@
 <template>
     <v-container fluid class="container">
-        <!-- <button class="test-btn" @click="loadTestPhoto">加载测试照片</button> -->
+        <button class="test-btn" @click="loadTestPhoto">加载测试照片</button>
         <div class="header">
             <TimeSlider v-model="sliderValue" :max="timeAll" style="position: absolute;" />
             <div class="btn_back">
@@ -149,21 +149,21 @@ export default defineComponent({
         const filterPhoto = computed(() => JourneyStore.filterPhoto);
         // 滤镜参数集合
         const filters = ref({
-            filter_1: 'saturate(1.2) brightness(1.1) contrast(1.05)',
-            filter_2: 'contrast(1.3) saturate(0.9)',
-            filter_3: 'blur(2.5px) brightness(120%) contrast(150%)  hue-rotate(5deg) saturate(80%) grayscale(50%) sepia(70%)',
-            filter_4: 'sepia(0.6) contrast(1.1) brightness(0.95)',
-            filter_5: 'grayscale(100%)'
+            filter_1: 'blur(1px) brightness(0.91) contrast(1.2)  hue-rotate(-5deg) saturate(95%) grayscale(20%) sepia(25%)',
+            filter_2: 'blur(3px) brightness(1.25) contrast(0.7)  hue-rotate(-5deg) saturate(80%) grayscale(10%) sepia(0%)',
+            filter_3: 'blur(2.5px) brightness(1.05) contrast(1)  hue-rotate(5deg) saturate(91%) grayscale(70%) sepia(65%)',
+            filter_4: 'blur(3px) brightness(0.8) contrast(1.3)  hue-rotate(-5deg) saturate(120%) grayscale(10%) sepia(10%)',
+            filter_5: 'blur(2px) brightness(1.06) contrast(1)  hue-rotate(0deg) saturate(100%) grayscale(100%) sepia(20%)'
         });
         const filterConfigs: Record<FilterKey, FilterConfig> = {
             filter_1: { mask: null, blendMode: null },
-            filter_2: { mask: null, blendMode: null },
+            filter_2: { mask: '/FilterSelect/Filter_2_mask.png', blendMode: 'lighten' },
             filter_3: {
                 mask: '/FilterSelect/Filter_3_mask.png',
                 blendMode: 'screen'
             },
-            filter_4: { mask: null, blendMode: null },
-            filter_5: { mask: null, blendMode: null },
+            filter_4: { mask: '/FilterSelect/Filter_4_mask.png', blendMode: 'overlay' },
+            filter_5: { mask: '/FilterSelect/Filter_5_mask.png', blendMode: 'overlay' },
         };
         const loadTestPhoto = () => {
             // 这里替换为你的测试照片路径
@@ -292,7 +292,7 @@ export default defineComponent({
                         const blobURL = URL.createObjectURL(blob);
                         JourneyStore.setPasterPhoto(blobURL);
                         JourneyStore.setPasterPhotoBlob(blob);
-                        
+
                     }
                 }, 'image/png', 1);
 
