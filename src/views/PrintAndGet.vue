@@ -6,11 +6,11 @@
             </div>
             <img src="\PrintAndGet\title_printAndGet.svg" />
             <div class="time">
-                <div class="time2">
+                <!-- <div class="time2">
                     <div class="time3">
                         {{ formattedTime }}
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
         <TimeSlider v-model="sliderValue" :max="timeAll" style="right:3%;top:1.5%" />
@@ -198,7 +198,7 @@ export default defineComponent({
     gap: 8px;
     z-index: 2;
     border-radius: 16px;
-    background: rgba(190, 190, 190, 0.3);
+    /* background: rgba(190, 190, 190, 0.3); */
 }
 
 .btn_back {
