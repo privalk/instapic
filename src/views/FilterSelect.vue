@@ -149,14 +149,14 @@ export default defineComponent({
         const filterPhoto = computed(() => JourneyStore.filterPhoto);
         // 滤镜参数集合
         const filters = ref({
-            filter_1: 'blur(1px) brightness(0.91) contrast(1.2)  hue-rotate(-5deg) saturate(95%) grayscale(20%) sepia(25%)',
-            filter_2: 'blur(3px) brightness(1.25) contrast(0.7)  hue-rotate(-5deg) saturate(80%) grayscale(10%) sepia(0%)',
-            filter_3: 'blur(2.5px) brightness(1.05) contrast(1)  hue-rotate(5deg) saturate(91%) grayscale(70%) sepia(65%)',
-            filter_4: 'blur(3px) brightness(0.8) contrast(1.3)  hue-rotate(-5deg) saturate(120%) grayscale(10%) sepia(10%)',
+            filter_1: 'blur(0.8px) brightness(95%) contrast(127%)  hue-rotate(0deg) saturate(156%) grayscale(45%) sepia(10%)',
+            filter_2: 'blur(0.7px) brightness(118%) contrast(84%)  hue-rotate(0deg) saturate(84%) grayscale(0%) sepia(0%)',
+            filter_3: 'blur(0.8px) brightness(104%) contrast(135%)  hue-rotate(0deg) saturate(177%) grayscale(77%) sepia(80%)',
+            filter_4: 'blur(0.8px) brightness(84%) contrast(129%)  hue-rotate(0deg) saturate(207%) grayscale(42%) sepia(10%)',
             filter_5: 'blur(1.2px) brightness(107%) contrast(146%)  hue-rotate(0deg) saturate(101%) grayscale(100%) sepia(15%)'
         });
         const filterConfigs: Record<FilterKey, FilterConfig> = {
-            filter_1: { mask: null, blendMode: null },
+            filter_1: { mask: '/FilterSelect/Filter_2_mask.png', blendMode: 'lighten' },
             filter_2: { mask: '/FilterSelect/Filter_2_mask.png', blendMode: 'lighten' },
             filter_3: {
                 mask: '/FilterSelect/Filter_3_mask.png',
