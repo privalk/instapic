@@ -40,6 +40,7 @@ interface ServiceInquiryResponse {
 interface GoodInquiryResponse {
   output_id_product: string;
   output_int4_price: number;
+  output_str_title:string;
 }
 
 interface JourneyCreationResponse {

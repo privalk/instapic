@@ -46,7 +46,7 @@ import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
 import TimeSlider from '@/components/TimeSlider.vue'
 import { nextTick } from 'process';
-type FilterKey = 'filter_1' | 'filter_2' | 'filter_3' | 'filter_4' | 'filter_5';
+type FilterKey = 'filter_1' | 'filter_2' | 'filter_3' | 'filter_4' | 'filter_5' | 'filter_6';
 // 定义合法的混合模式类型
 type BlendMode = GlobalCompositeOperation | null;
 
@@ -153,7 +153,8 @@ export default defineComponent({
             filter_2: 'blur(0.7px) brightness(118%) contrast(84%)  hue-rotate(0deg) saturate(84%) grayscale(0%) sepia(0%)',
             filter_3: 'blur(0.8px) brightness(104%) contrast(135%)  hue-rotate(0deg) saturate(177%) grayscale(77%) sepia(80%)',
             filter_4: 'blur(0.8px) brightness(84%) contrast(129%)  hue-rotate(0deg) saturate(207%) grayscale(42%) sepia(10%)',
-            filter_5: 'blur(1.2px) brightness(107%) contrast(146%)  hue-rotate(0deg) saturate(101%) grayscale(100%) sepia(15%)'
+            filter_5: 'blur(1.2px) brightness(107%) contrast(146%)  hue-rotate(0deg) saturate(101%) grayscale(100%) sepia(15%)',
+            filter_6: 'blur(1.2px) brightness(107%) contrast(146%)  hue-rotate(0deg) saturate(101%) grayscale(100%) sepia(15%)'
         });
         const filterConfigs: Record<FilterKey, FilterConfig> = {
             filter_1: { mask: '/FilterSelect/Filter_2_mask.png', blendMode: 'lighten' },
@@ -164,6 +165,7 @@ export default defineComponent({
             },
             filter_4: { mask: '/FilterSelect/Filter_4_mask.png', blendMode: 'overlay' },
             filter_5: { mask: '/FilterSelect/Filter_5_mask.png', blendMode: 'overlay' },
+            filter_6: { mask: '/FilterSelect/Filter_6_mask.png', blendMode: 'multiply' },
         };
         const loadTestPhoto = () => {
             // 这里替换为你的测试照片路径
@@ -461,12 +463,20 @@ export default defineComponent({
 
 }
 
-.btn_filter_5 {
+.btn_filter_5{
     /* 自动布局子元素 */
     width: 179px;
     height: 245px;
 
     background: url('/FilterSelect/btn_filter_5.png') no-repeat center center / cover;
+}
+
+.btn_filter_6 {
+    /* 自动布局子元素 */
+    width: 179px;
+    height: 245px;
+
+    background: url('/FilterSelect/btn_filter_6.png') no-repeat center center / cover;
 }
 
 .btn_filter:active {

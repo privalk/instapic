@@ -18,13 +18,15 @@
 
         <div class="body">
             <div class="left"><v-slider v-model="beautyStrength" :max="1" :min="0" :step="0.1" class="custom-slider"
-                    color="white" thumb-color="black" track-color="#CDCDCD" direction="vertical"></v-slider>
+                    color="white" thumb-size="40px" thumb-color="black" track-color="#CDCDCD"
+                    direction="vertical"></v-slider>
                 <img src="\BeautyFilter\text_BeautyFilter.svg" />
             </div>
 
             <div class="right">
                 <div class="cameraArea">
-                    <video ref="videoElement" class="video-preview" :style="{ transform: 'scaleX(-1)' }" autoplay playsinline></video>
+                    <video ref="videoElement" class="video-preview" :style="{ transform: 'scaleX(-1)' }" autoplay
+                        playsinline></video>
                     <!-- <canvas ref="canvasElement" class="canvas-preview"></canvas> -->
                 </div>
                 <img class="btn_startPhoto" src="\BeautyFilter\btn_startPhoto.svg" @click="handleStartPhoto" />
@@ -108,22 +110,55 @@ export default defineComponent({
 
 <style scoped>
 .custom-slider :deep(.v-slider-track__background) {
-    width: 40px !important;
-    transform: translateY(3%);
-    height: 108% !important;
+    width: 35px !important;
+    height: 100% !important;
     border-radius: 24px;
-    border: #000000 2px solid;
+    border: 2px solid #000000;
+    background: #CDCDCD;
+    transform: none;
+    margin-left: auto;
+    margin-right: auto;
+    left: -15px;
+    right: 0;
 }
-
 
 .custom-slider :deep(.v-slider-track__fill) {
-    width: 28px !important;
-    /* transform: translateY(1%); */
-    border-radius: 24px;
+    width: 24px !important;
+    border-radius: 12px;
+    /* border: 2px solid #000000; */
+    background: #FFFFFF;
+    margin: 0 auto;
     margin-bottom: 10px;
-    margin-top: 20px;
+    transform: none;
+    transition: all 0.3s ease;
 }
 
+.custom-slider :deep(.v-slider-thumb__surface) {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 2px solid #000000;
+    transition: all 0.3s ease;
+}
+
+.custom-slider :deep(.v-input__control) {
+    height: 650px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-slider :deep(.v-slider--vertical) {
+    margin: 0 auto;
+}
+
+/* 鼠标悬停状态 */
+.custom-slider:deep(.v-slider-thumb__surface:hover) {
+    transform: scale(1.1);
+}
+
+/* 激活状态 */
+.custom-slider:deep(.v-slider-thumb__surface--active) {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
 
 
 .btn_startPhoto:active {

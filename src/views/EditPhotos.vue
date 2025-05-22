@@ -357,7 +357,7 @@ export default defineComponent({
 <style scoped>
 .btn.disabled {
     filter: grayscale(100%);
-    opacity: 0.6;
+    opacity: 0.2;
     cursor: not-allowed;
     pointer-events: none;
 }
