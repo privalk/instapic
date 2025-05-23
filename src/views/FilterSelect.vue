@@ -44,9 +44,21 @@ import { defineComponent, ref, onMounted, onUnmounted, computed } from 'vue';
 import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
+import { applyLUT } from '@/utils/applyLut';   // ← 新增：引入你的 applyLUT 函数
 import TimeSlider from '@/components/TimeSlider.vue'
 import { nextTick } from 'process';
 type FilterKey = 'filter_1' | 'filter_2' | 'filter_3' | 'filter_4' | 'filter_5' | 'filter_6';
+
+// 新的 LUT 配置：只保留文件路径 + size + cols
+const lutConfigs: Record<FilterKey, { path: string; size: number; cols: number }> = {
+  filter_1: { path: '/luts/filter1.png', size: 64, cols: 8 },
+  filter_2: { path: '/luts/filter2.png', size: 33, cols: 6 },
+  filter_3: { path: '/luts/filter3.png', size: 64, cols: 8 },
+  filter_4: { path: '/luts/filter4.png', size: 64, cols: 8 },
+  filter_5: { path: '/luts/filter5.png', size: 64, cols: 8 },
+  filter_6: { path: '/luts/filter6.png', size: 64, cols: 8 },
+};
+
 // 定义合法的混合模式类型
 type BlendMode = GlobalCompositeOperation | null;
 
@@ -71,6 +83,68 @@ export default defineComponent({
         })
 
         let timer: ReturnType<typeof setInterval>;
+
+        // 当前选中的滤镜 key
+        const selectedFilterKey = ref<FilterKey | null>(null);
+        
+        // 辅助：用来加载任意图片 URL
+        const loadImage = (src: string): Promise<HTMLImageElement> =>
+        new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.decoding = 'async';
+            img.src = src;
+            img.onload = () => resolve(img);
+            img.onerror = (e) => reject(e);
+        });
+
+        // 点击某个 LUT 滤镜时调用
+        const applyFilter = async (filterKey: FilterKey) => {
+        // 如果取消同一个滤镜，恢复原图
+        if (selectedFilterKey.value === filterKey) {
+            selectedFilterKey.value = null;
+            JourneyStore.filterPhoto = JourneyStore.capturedPhoto || '';
+            return;
+        }
+        selectedFilterKey.value = filterKey;
+
+        const cfg = lutConfigs[filterKey];
+        if (!JourneyStore.capturedPhoto) return;
+
+        try {
+            // 并行加载原图和 LUT 图
+            const [srcImg, lutImg] = await Promise.all([
+            loadImage(JourneyStore.capturedPhoto),
+            loadImage(cfg.path),
+            ]);
+
+            // 1) 在内存里创建 lutCanvas
+            const lutCanvas = document.createElement('canvas');
+            lutCanvas.width = lutImg.naturalWidth;
+            lutCanvas.height = lutImg.naturalHeight;
+            lutCanvas.dataset.lutSize = cfg.size.toString();
+            lutCanvas.dataset.lutCols = cfg.cols.toString();
+            const lutCtx = lutCanvas.getContext('2d')!;
+            lutCtx.drawImage(lutImg, 0, 0);
+
+            // 2) 创建 outputCanvas 并执行 LUT 查找
+            const outputCanvas = document.createElement('canvas');
+            applyLUT(srcImg, lutCanvas, outputCanvas);
+
+            // 3) 转成 Blob 并更新预览
+            const blob: Blob | null = await new Promise(resolve =>
+            outputCanvas.toBlob(b => resolve(b), 'image/png')
+            );
+            if (blob) {
+            JourneyStore.filterPhoto = URL.createObjectURL(blob);
+            }
+        } catch (err) {
+            console.error('LUT 应用失败：', err);
+            // 回退到原图
+            JourneyStore.filterPhoto = JourneyStore.capturedPhoto || '';
+        }
+        };
+
         // 格式化时间为XX:XX
         const formattedTime = computed(() => {
             const mins = Math.floor(timeLeft.value / 60);
@@ -107,23 +181,24 @@ export default defineComponent({
             console.log('拼图完成')
         }
 
-        // 图片加载器（增强版）
-        const loadImage = (src: string): Promise<HTMLImageElement> => {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.crossOrigin = 'anonymous'; // 添加 CORS 属性
-                img.decoding = 'async'; // 启用异步解码
-                img.src = src;
+        // // 图片加载器（增强版）
+        // const loadImage = (src: string): Promise<HTMLImageElement> => {
+        //     return new Promise((resolve, reject) => {
+        //         const img = new Image();
+        //         img.crossOrigin = 'anonymous'; // 添加 CORS 属性
+        //         img.decoding = 'async'; // 启用异步解码
+        //         img.src = src;
 
-                img.onload = () => {
-                    if (img.naturalWidth === 0) {
-                        reject(new Error('图片加载异常'));
-                    }
-                    resolve(img);
-                };
-                img.onerror = (e) => reject(e);
-            });
-        };
+        //         img.onload = () => {
+        //             if (img.naturalWidth === 0) {
+        //                 reject(new Error('图片加载异常'));
+        //             }
+        //             resolve(img);
+        //         };
+        //         img.onerror = (e) => reject(e);
+        //     });
+        // };
+
         // 启动定时器
         onMounted(() => {
             nextTick(() => {
@@ -182,30 +257,30 @@ export default defineComponent({
             console.log('测试照片已加载');
         };
         const activeFilter = ref('');
-        const selectedFilterKey = ref<FilterKey | null>(null);
-        const applyFilter = async (filterKey: FilterKey) => {
-            if (selectedFilterKey.value === filterKey) {
-                // 取消选择时恢复原图
-                selectedFilterKey.value = null;
-                activeFilter.value = '';
-                JourneyStore.filterPhoto = JourneyStore.capturedPhoto || '';
-            } else {
-                // 应用新滤镜
-                selectedFilterKey.value = filterKey;
-                activeFilter.value = filters.value[filterKey];
+        // const selectedFilterKey = ref<FilterKey | null>(null);
+        // const applyFilter = async (filterKey: FilterKey) => {
+        //     if (selectedFilterKey.value === filterKey) {
+        //         // 取消选择时恢复原图
+        //         selectedFilterKey.value = null;
+        //         activeFilter.value = '';
+        //         JourneyStore.filterPhoto = JourneyStore.capturedPhoto || '';
+        //     } else {
+        //         // 应用新滤镜
+        //         selectedFilterKey.value = filterKey;
+        //         activeFilter.value = filters.value[filterKey];
 
-                // 立即生成预览图
-                try {
-                    const success = await setFilter(activeFilter.value);
-                    if (!success) {
-                        console.error('滤镜应用失败');
-                        JourneyStore.filterPhoto = JourneyStore.capturedPhoto || '';
-                    }
-                } catch (error) {
-                    console.error('滤镜处理异常:', error);
-                }
-            }
-        };
+        //         // 立即生成预览图
+        //         try {
+        //             const success = await setFilter(activeFilter.value);
+        //             if (!success) {
+        //                 console.error('滤镜应用失败');
+        //                 JourneyStore.filterPhoto = JourneyStore.capturedPhoto || '';
+        //             }
+        //         } catch (error) {
+        //             console.error('滤镜处理异常:', error);
+        //         }
+        //     }
+        // };
 
         // 优化后的 setFilter 函数
         const setFilter = async (filter: string) => {
