@@ -25,7 +25,7 @@
 
             </div>
             <div class="middle" ref="middleElement">
-                <img :src=framePhotoUrl class="PhotoFrame">
+                <img :src=framePhotoUrl class="PhotoFrame" @load="handleFrameLoaded">
             </div>
             <div class="right">
                 <div class="right_top" ref="rightTopElement"></div>
@@ -125,17 +125,7 @@ export default defineComponent({
                 }
             }, 1000);
 
-            nextTick(() => {
-                if (!canvasContainer.value) {
-                    console.error('无法获取 DOM 元素')
-                    return
-                }
 
-
-                // 初始化交互
-                initInteract()
-                initImagePositions()
-            })
         })
 
 
@@ -148,22 +138,19 @@ export default defineComponent({
                 console.error('无法获取 DOM 元素');
                 return;
             }
-            // 计算限制区域
-            const getAreaRect = (element: HTMLElement) => ({
-                left: element.offsetLeft + 130,
-                top: element.offsetTop + 171,
-                right: element.offsetLeft + element.offsetWidth + 80,
-                bottom: element.offsetTop + 145 + element.offsetHeight
-            })
-            const middleRect = getAreaRect(middleElement.value)
-            const rightTopRect = getAreaRect(rightTopElement.value)
-            console.log('中间区域:', middleRect)
-            console.log('右上区域:', rightTopRect)
+            const frameElement = document.querySelector('.PhotoFrame') as HTMLElement
+            if (!frameElement) return
+
+            // 获取相框实际显示区域
+            const frameRect = frameElement.getBoundingClientRect()
+
+
+            // 设置拖拽限制区域为相框范围
             const restriction = {
-                left: middleRect.left,
-                top: middleRect.top,
-                right: rightTopRect.right,
-                bottom: middleRect.bottom
+                left: frameRect.left -200,
+                top: frameRect.top - 200,
+                right: frameRect.right + 200,
+                bottom: frameRect.bottom + 200
             }
             console.log('限制区域:', restriction)
             interact('.draggable-image')
@@ -193,25 +180,64 @@ export default defineComponent({
 
         // 自动排列初始化逻辑
         const initImagePositions = () => {
-            const rightTop = rightTopElement.value
-            if (!rightTop) return
 
-            const areaWidth = rightTop.offsetWidth
-            // const areaHeight = rightTop.offsetHeight
-            const imgWidth = 200 // 与 CSS 中 draggable-image img 的宽度一致
-            const imgHeight = 200 // 根据实际图片比例调整
+            const frameElement = document.querySelector('.PhotoFrame') as HTMLElement
+            if (!frameElement || !JourneyStore.selectedFrame?.regions) return
 
-            // 计算行列数和间距
-            const cols = Math.floor(areaWidth / imgWidth)
-            const horizontalGap = (areaWidth - cols * imgWidth) / (cols + 1)
-            const verticalGap = 20
+            // 获取相框在页面中的绝对位置
+            if (!canvasContainer.value) {
+                console.error('canvasContainer is null');
+                return;
+            }
+            const containerRect = canvasContainer.value.getBoundingClientRect();
+            const frameRect = frameElement.getBoundingClientRect()
+            console.log('相框绝对位置:', frameRect)
 
-            images.value.forEach((img, index) => {
-                const row = Math.floor(index / cols)
-                const col = index % cols
+            // 设计稿尺寸（根据相框原图尺寸设置）
+            const designWidth = 1920  // 相框原图宽度
+            const designHeight = 2860 // 相框原图高度
 
-                img.x = rightTop.offsetLeft + horizontalGap * (col + 1) + imgWidth * col
-                img.y = rightTop.offsetTop + verticalGap * (row + 1) + imgHeight * row
+            // 计算缩放比例
+            const scaleX = frameRect.width / designWidth
+            const scaleY = frameRect.height / designHeight
+            console.log('XY缩放比例:', scaleX, scaleY)
+
+
+
+            images.value = images.value.map((img, index) => {
+                const region = JourneyStore.selectedFrame!.regions[index]
+                if (!region) {
+                    console.warn(`图片 ${index} 缺少 region 配置`)
+                    return img
+                }
+                // 计算实际显示尺寸
+                const displayWidth = region.width * scaleX
+                const displayHeight = region.height * scaleY
+                // 将相框相对坐标转为绝对坐标
+                const absoluteX = frameRect.left + (region.x * scaleX) - containerRect.left +displayWidth/2;
+                const absoluteY = frameRect.top + (region.y * scaleY) - containerRect.top+displayHeight/2;
+
+
+
+                // 计算缩放比例（基于初始200px宽度）
+                const scale = displayWidth / 198
+
+                return {
+                    ...img,
+                    x: absoluteX,
+                    y: absoluteY,
+                    scale: scale,
+                    rotate: region.rotate || 0,
+                    opacity: 1
+                }
+            })
+
+            console.log('自动布局完成:', images.value)
+        }
+        const handleFrameLoaded = () => {
+            nextTick(() => {
+                initImagePositions()
+                initInteract() // 需要重新初始化交互限制区域
             })
         }
         const handleGestureMove = (event: Interact.GestureEvent) => {
@@ -348,7 +374,7 @@ export default defineComponent({
             images, getImageStyle, canvasContainer, middleElement,
             rightTopElement, captureHD, remainAttempts_selectFrame,
             handleReselectFrame, handleConfirm, framePhotoUrl,
-            timeAll, sliderValue
+            timeAll, sliderValue, handleFrameLoaded
         };
     },
 });
