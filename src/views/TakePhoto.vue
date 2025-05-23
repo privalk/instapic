@@ -96,7 +96,7 @@ export default defineComponent({
                 case 1:
                     return { width: '523.832px', height: '700px' };
                 case 2:
-                    return { width: '600px', height: '359.702px' };
+                    return { width: '600px', height: '449.628px' };
 
                 case 4:
                     return { width: '523.659px', height: '700px' };

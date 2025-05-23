@@ -186,10 +186,15 @@ export default defineComponent({
         };
         const submitCoupon = async () => {
             try {
+                
                 isLoading.value = true;
                 // 假设你的 store 方法改为抛出异常，而不是内部 catch
                 await journeyStore.CouponApplyToOrder();
                 // 如果需要成功提示，也可以在这里处理
+                // snackbar.value.message = '优惠券应用成功。';
+                // snackbar.value.show = true;
+                // // 跳转到支付选择页面
+                couponCode.value = '';
                 router.push({
                     name: 'PaySelect',
                     params: {

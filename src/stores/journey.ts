@@ -4,21 +4,24 @@ import router from '@/router';
 import { defineStore } from 'pinia'
 import { useConfigStore } from '@/stores/config'
 import { PG0ExternalServerApi } from '@/Api/PG0ExternalServerApi';
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore, type product,type PhotoFrame } from '@/stores/auth'
 interface payment {
     output_str_channel: string;
     output_str_method: string;
 }
+
 export const useJourneyStore = defineStore('journey', {
     state: () => ({
         config: useConfigStore(), // 引入配置文件
         auth: useAuthStore(), // 引入配置文件
-        num_grid: 1 as number, // 宫格数量
+        num_grid: 4 as number, // 宫格数量
         journeyWay: 0 as number, // 体验方式 1:现场拍摄   2：上传 
-        price: 35 as number, // 价格
+        price: 0 as number, // 价格
+        selectedProduct: null as product | null,
         payWay: '' as string, // 支付方式 支付宝 微信支付
         couponCode: '' as string, // 优惠码
         couponPrice: 0 as number, // 优惠金额
+        selectedFrame: null as PhotoFrame | null,
         selectedFrameUrl: '' as string, // 选中的相框URL
         photos: [] as string[], // 图片数组，用来存放用户拍的照片
         remainAttempts_takePhotos: 2 as number, // 剩余拍摄次数
@@ -40,7 +43,7 @@ export const useJourneyStore = defineStore('journey', {
         order_add_id: '' as string, // 订单附加ID
         payment: [] as payment[], // 支付方式
 
-        beautyStrength: 0 as number, // 美颜强度
+        beautyStrength: 0.1 as number, // 美颜强度
 
     }),
 
@@ -61,9 +64,7 @@ export const useJourneyStore = defineStore('journey', {
             this.order_id = '';
             this.order_add_id = '';
             this.payment = [];
-            if (this.auth.product_price !== undefined) {
-                this.price = this.auth.product_price
-            }
+
             if (this.auth.product_add_price !== undefined) {
                 this.overPrintPrice = this.auth.product_add_price
             }
@@ -79,7 +80,14 @@ export const useJourneyStore = defineStore('journey', {
             this.photos = [];
         },
         Select_GridNum(num: number) {
-            // console.log(num)
+            const gridProductMap: Record<number, product | null> = {
+                1: this.auth.product_01,
+                2: this.auth.product_02,
+                4: this.auth.product_04,
+                6: this.auth.product_06,
+                8: this.auth.product_08
+            };
+            this.selectedProduct = gridProductMap[num] || null;
             this.num_grid = num;
             if (num === 8) {
                 this.PrintNum = 1;
@@ -184,13 +192,17 @@ export const useJourneyStore = defineStore('journey', {
                 console.log('附加订单ID已存在:', this.order_add_id);
             }
             else if (!isAdd) {
+                if (!this.selectedProduct || !this.selectedProduct.output_id_product) {
+                    throw new Error('No product selected or product_id is missing');
+                }
                 const jsonItem = [{
-                    'product_id': this.auth.product_id,
+                    'product_id': this.selectedProduct.output_id_product,
                     'quantity': 1,
                 }]
                 await PG0ExternalServerApi.OrderCreation('instapic', this.auth.device_id, this.journey_id, jsonItem)
                     .then((res) => {
                         console.log('订单创建:', res);
+                        this.price = res[0].output_int4_total_price;
                         this.order_id = res[0].output_id_order;
                     }).catch((error) => {
                         console.error('订单创建请求失败:', error);

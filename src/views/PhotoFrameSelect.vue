@@ -18,13 +18,21 @@
         <div class="body">
             <div class="choosedArea">
                 <div class="PhotoFrameSelected">
-                    <img :src="selectedFrame" alt="PhotoFrameSelected" class="selected-frame" />
+
+                    <!-- 叠加照片到 regions -->
+                    <div class="photo-overlay">
+                        <div v-for="(region, index) in regions" :key="index">
+                            <img v-if="photos[index]" :src="photos[index]" :style="getPhotoStyle(region)"
+                                class="photo" />
+                        </div>
+                    </div>
+                    <img :src="selectedFrame?.url" alt="PhotoFrameSelected" class="selected-frame" />
                 </div>
                 <img src="/PhotoFrameSelect/btn_nextStep.svg" class="btn" @click="ClickToNext" />
             </div>
             <div class="toChooseArea">
                 <div v-for="(frame, index) in frameList" :key="index" class="frame-item" @click="selectFrame(frame)">
-                    <img :src="frame" alt="frame" class="frame-image" />
+                    <img :src="frame.url" alt="frame" class="frame-image" />
                 </div>
             </div>
         </div>
@@ -37,14 +45,21 @@ import { defineComponent, ref, onMounted, onUnmounted, computed, watch } from 'v
 import { useConfigStore } from '@/stores/config';
 import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore, type PhotoFrame, type regions } from '@/stores/auth';
 import TimeSlider from '@/components/TimeSlider.vue'
+
 export default defineComponent({
     components: {
         TimeSlider
     },
     setup() {
         const configStore = useConfigStore();
+        const selectedFrame = computed({
+            get: () => journeyStore.selectedFrame,
+            set: (value) => journeyStore.selectedFrame = value
+        });
+        const photos = computed(() => journeyStore.photos);
+        const regions = computed(() => selectedFrame.value?.regions || []);
         const timeLeft = ref(configStore.WaitTime_PhotoFrameSelect);
         const timeAll = ref(configStore.WaitTime_PhotoFrameSelect);
         const sliderValue = computed(() => {
@@ -63,6 +78,7 @@ export default defineComponent({
         };
         // 启动定时器
         onMounted(() => {
+            // requestAnimationFrame(init);
             timer = setInterval(() => {
                 if (timeLeft.value > 0) {
                     timeLeft.value--;
@@ -71,6 +87,7 @@ export default defineComponent({
                     clearInterval(timer);
                 }
             }, 1000);
+
         });
 
         // 清除定时器
@@ -80,9 +97,8 @@ export default defineComponent({
 
         const journeyStore = useJourneyStore();
         const authStore = useAuthStore();
-        const selectedFrame = ref<string>('');
         const frameList = computed(() => {
-            const frameTypeMap: Record<number, string[]> = {
+            const frameTypeMap: Record<number, PhotoFrame[]> = {
                 1: authStore.Instapic_FrameType_01,
                 2: authStore.Instapic_FrameType_02,
                 4: authStore.Instapic_FrameType_04,
@@ -91,9 +107,10 @@ export default defineComponent({
             };
             return frameTypeMap[journeyStore.num_grid] || [];
         });
-        const selectFrame = (frameUrl: string) => {
-            selectedFrame.value = frameUrl;
-            journeyStore.selectedFrameUrl = frameUrl; // 存储到store
+        const selectFrame = (frame: PhotoFrame) => {
+            selectedFrame.value = frame;
+            journeyStore.selectedFrame = frame;
+            journeyStore.selectedFrameUrl = frame.url; // 存储到store
         };
         watch(
             () => frameList.value,
@@ -104,11 +121,28 @@ export default defineComponent({
             },
             { immediate: true }
         );
+        // 生成照片样式
+        const getPhotoStyle = (region: regions) => ({
+            left: `${region.x / 4}px`,
+            top: `${region.y / 4}px`,
+            width: `${region.width / 4}px`,
+            height: `${region.height / 4}px`,
+            transform: `rotate(${region.rotate}deg)`,
+        });
+        // const init = () => {
 
+        //     const frameElement = document.querySelector('.PhotoFrameSelected') as HTMLImageElement;
+        //     const photoOverlay = document.querySelector('.photo-overlay') as HTMLDivElement;
+        //     const frameElementRect = frameElement.getBoundingClientRect();
+        //     console.log(frameElementRect);
+        //     // photoOverlay.style.left = `${frameElementRect.left}px`;
+        //     // photoOverlay.style.top = `${frameElementRect.top}px`;
+        // }
         return {
             timeAll, sliderValue, ClickToNext, frameList,
             selectedFrame,
-            selectFrame
+            selectFrame,
+            regions, getPhotoStyle, photos
         };
     },
 });
@@ -118,15 +152,36 @@ export default defineComponent({
 .toChooseArea {
     /* 自动布局子元素 */
     width: 900px;
-    height: 829px;
+    height: 720x;
     /* 自动布局 */
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
     overflow-y: auto;
-    max-height: 700px;
-    padding: 20px;
+    /* max-height: 700px; */
+    /* padding: 20px; */
     justify-content: flex-start;
+}
+
+.photo-overlay {
+    position: absolute;
+    width: 480px;
+    height: 715px;
+    top: 0;
+    left: 0;
+    position: absolute;
+    z-index: 1;
+    /* 照片在下层 */
+}
+
+.photo {
+    position: absolute;
+    object-fit: cover;
+    /* 保持图片比例并填充区域 */
+    transform-origin: center center;
+    /* 旋转基准点 */
+    z-index: 1;
+    /* 照片元素自身层级 */
 }
 
 .frame-item {
@@ -147,26 +202,32 @@ export default defineComponent({
     /* border-radius: 10px; */
     background: #D8D8D8;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
 }
 
 .selected-frame {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    background: #D8D8D8;
-
+    /* background: #D8D8D8; */
+    flex-shrink: 0;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    position: relative;
+    /* 确保相框建立层叠上下文 */
+    z-index: 2;
+    /* 相框在上层 */
 }
 
 .PhotoFrameSelected {
     /* 自动布局子元素 */
-    width: 383px;
-    height: 570px;
-    /* 自动布局 */
-    display: flex;
-    padding: 0px;
-    gap: 10px;
-    z-index: 0;
+    width: 480px;
+    height: 715px;
+    flex-shrink: 0;
+    /* 新增 */
+    position: relative;
+    /* 添加定位基准 */
+    z-index: 1;
+    /* 整体容器层级 */
 }
 
 .choosedArea {
@@ -182,7 +243,7 @@ export default defineComponent({
     gap: 36px;
     flex-grow: 1;
     align-self: stretch;
-    z-index: 0;
+    z-index: 2;
 }
 
 .time3 {
@@ -295,7 +356,7 @@ export default defineComponent({
     padding: 0px;
     flex-grow: 1;
     align-self: stretch;
-    z-index: 1;
+    z-index: 3;
 }
 
 .footer {

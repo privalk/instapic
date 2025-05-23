@@ -1,7 +1,7 @@
 <template>
     <v-container fluid class="container">
         <img src="/Home/Ads_Left.svg" class="Ads_Left" />
-        <img src="/Home/Body.svg" @click="ClickToStart"></img>
+        <img src="/Home/Body.png" @click="ClickToStart"></img>
         <img src="/Home/Ads_Right.svg" class="Ads_Right" />
     </v-container>
 </template>
