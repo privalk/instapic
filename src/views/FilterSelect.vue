@@ -20,12 +20,14 @@
         <div class="body">
             <div class="left">
                 <img :src="selectedFrameUrl" class="FramePreview" />
-                <img :src="filterPhoto ?? ''" class="FilterPreview" />
+                <!-- <img :src="filterPhoto ?? ''" class="FilterPreview" /> -->
+                <!-- 用 Canvas 预览滤镜效果 -->
+                <canvas ref="previewCanvas" class="FilterPreview"></canvas>
                 <img src="\FilterSelect\btn_Next.png" class="btn" @click="handleConfirm" />
             </div>
             <div class="right">
                 <div class="right_">
-                    <div v-for="filterKey in (Object.keys(filters) as FilterKey[])" :key="filterKey" class="btn_filter"
+                    <div v-for="filterKey in filterKeys" :key="filterKey" class="btn_filter"
                         @click="applyFilter(filterKey)" :class="{ 'active': selectedFilterKey === filterKey }">
                         <div :class="`btn_${filterKey}`"></div>
                     </div>
@@ -40,360 +42,229 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted, computed } from 'vue';
+import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue';
 import { useConfigStore } from '@/stores/config';
-import router from '@/router';
 import { useJourneyStore } from '@/stores/journey';
-import { applyLUT } from '@/utils/applyLut';   // ← 新增：引入你的 applyLUT 函数
-import TimeSlider from '@/components/TimeSlider.vue'
 import { nextTick } from 'process';
+import { applyLUT } from '@/utils/applyLut';
+import TimeSlider from '@/components/TimeSlider.vue';
+import router from '@/router';
+
 type FilterKey = 'filter_1' | 'filter_2' | 'filter_3' | 'filter_4' | 'filter_5' | 'filter_6';
 
-// 新的 LUT 配置：只保留文件路径 + size + cols
-const lutConfigs: Record<FilterKey, { path: string; size: number; cols: number }> = {
-  filter_1: { path: '/luts/filter1.png', size: 64, cols: 8 },
-  filter_2: { path: '/luts/filter2.png', size: 33, cols: 6 },
-  filter_3: { path: '/luts/filter3.png', size: 64, cols: 8 },
-  filter_4: { path: '/luts/filter4.png', size: 64, cols: 8 },
-  filter_5: { path: '/luts/filter5.png', size: 64, cols: 8 },
-  filter_6: { path: '/luts/filter6.png', size: 64, cols: 8 },
+type BlendMode = GlobalCompositeOperation;
+
+// 新的 LUT + 遮罩 配置
+// blendMode 可选值：
+// ‘lighten’：保留色彩更亮的像素（增亮效果）
+// ‘screen’：反相相乘再反相，整体变亮并保留高光（高光增亮）
+// ‘overlay’：根据基底亮度使用 screen 或 multiply，提高对比度（增强对比）
+// ‘multiply’：按素值相乘，整体变暗（阴影加深）
+const lutConfigs: Record<FilterKey, { path: string; size: number; cols: number; mask?: string; blendMode?: BlendMode }> = {
+  filter_1: { path: '/luts/filter1.png', size: 64, cols: 8, mask: '/FilterSelect/Filter_1_mask.png' },
+  filter_2: { path: '/luts/filter2.png', size: 64, cols: 8, mask: '/FilterSelect/Filter_2_mask.png', blendMode: 'lighten' },
+  filter_3: { path: '/luts/filter3.png', size: 64, cols: 8, mask: '/FilterSelect/Filter_3_mask.png', blendMode: 'screen' },
+  filter_4: { path: '/luts/filter4.png', size: 64, cols: 8, mask: '/FilterSelect/Filter_4_mask.png' },
+  filter_5: { path: '/luts/filter5.png', size: 64, cols: 8, mask: '/FilterSelect/Filter_5_mask.png' },
+  filter_6: { path: '/luts/filter6.png', size: 64, cols: 8, mask: '/FilterSelect/Filter_6_mask.png' },
 };
 
-// 定义合法的混合模式类型
-type BlendMode = GlobalCompositeOperation | null;
-
-// 配置对象类型
-type FilterConfig = {
-    mask: string | null;
-    blendMode: BlendMode;
-};
 export default defineComponent({
-    components: {
-        TimeSlider
-    },
-    setup() {
-        const configStore = useConfigStore();
-        const timeLeft = ref(configStore.WaitTime_GridSelect);
-        const timeAll = ref(configStore.WaitTime_GridSelect);
-        const selectedFrameUrl = computed(() => {
-            return JourneyStore.selectedFrameUrl
-        })
-        const sliderValue = computed(() => {
-            return timeLeft.value;
-        })
+  components: { TimeSlider },
+  setup() {
+    const configStore = useConfigStore();
+    const JourneyStore = useJourneyStore();
 
-        let timer: ReturnType<typeof setInterval>;
+    // 定时器
+    const timeLeft = ref(configStore.WaitTime_GridSelect);
+    const timeAll = ref(configStore.WaitTime_GridSelect);
 
-        // 当前选中的滤镜 key
-        const selectedFilterKey = ref<FilterKey | null>(null);
-        
-        // 辅助：用来加载任意图片 URL
-        const loadImage = (src: string): Promise<HTMLImageElement> =>
-        new Promise((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.decoding = 'async';
-            img.src = src;
-            img.onload = () => resolve(img);
-            img.onerror = (e) => reject(e);
-        });
+    // 滤镜列表 & 当前选中
+    const filterKeys = Object.keys(lutConfigs) as FilterKey[];
+    const selectedFilterKey = ref<FilterKey | null>(null);
 
-        // 点击某个 LUT 滤镜时调用
-        const applyFilter = async (filterKey: FilterKey) => {
-        // 如果取消同一个滤镜，恢复原图
+    // 绑定视图
+    const selectedFrameUrl = computed(() => JourneyStore.selectedFrameUrl);
+    const sliderValue = computed(() => timeLeft.value);
+    // const filterPhoto = computed(() => JourneyStore.filterPhoto);
+    const previewCanvas = ref<HTMLCanvasElement | null>(null);
+
+    // 时间格式化
+    const formattedTime = computed(() => {
+      const mins = Math.floor(timeLeft.value / 60);
+      const secs = timeLeft.value % 60;
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    });    
+
+    // 加载图片工具
+    const loadImage = (src: string): Promise<HTMLImageElement> =>
+      new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.decoding = 'async';
+        img.src = src;
+        img.onload = () => resolve(img);
+        img.onerror = e => reject(e);
+      });
+      
+    // 缓存 LUT Canvas
+    const lutCache = new Map<FilterKey, HTMLCanvasElement>();
+
+    // 预加载所有 LUT
+    onMounted(async () => {
+      for (const key of filterKeys) {
+        const cfg = lutConfigs[key];
+        try {
+          const img = await loadImage(cfg.path);
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d')!;
+          ctx.drawImage(img, 0, 0);
+          canvas.dataset.lutSize = cfg.size.toString();
+          canvas.dataset.lutCols = cfg.cols.toString();
+          lutCache.set(key, canvas);
+        } catch (e) {
+          console.error('LUT 预加载失败', key, e);
+        }
+      }
+
+      // 启动倒计时
+      nextTick(() => console.log(JourneyStore.capturedPhoto));
+      timer = setInterval(() => {
+        if (timeLeft.value > 0) timeLeft.value--; else { handleConfirm(); clearInterval(timer); }
+      }, 1000);
+    });
+
+    onUnmounted(() => clearInterval(timer));
+
+    let timer: ReturnType<typeof setInterval>;
+
+    // 应用 LUT 滤镜 + 遮罩混合， 直接在 previewCanvas 上绘制
+    const applyFilter = async (filterKey: FilterKey) => {
+
+        const start = performance.now();
+        console.log('start applyFilter', start);
+
+        // 检查滤镜配置与原图存在与否
         if (selectedFilterKey.value === filterKey) {
-            selectedFilterKey.value = null;
-            JourneyStore.filterPhoto = JourneyStore.capturedPhoto || '';
-            return;
+            selectedFilterKey.value = null; JourneyStore.filterPhoto = JourneyStore.capturedPhoto || ''; return;
         }
         selectedFilterKey.value = filterKey;
-
         const cfg = lutConfigs[filterKey];
-        if (!JourneyStore.capturedPhoto) return;
+        const lutCanvas = lutCache.get(filterKey);
+        if (!lutCanvas || !JourneyStore.capturedPhoto) return;
+
+        console.log('cache and config ready', performance.now() - start, 'ms');
 
         try {
-            // 并行加载原图和 LUT 图
-            const [srcImg, lutImg] = await Promise.all([
-            loadImage(JourneyStore.capturedPhoto),
-            loadImage(cfg.path),
-            ]);
-
-            // 1) 在内存里创建 lutCanvas
-            const lutCanvas = document.createElement('canvas');
-            lutCanvas.width = lutImg.naturalWidth;
-            lutCanvas.height = lutImg.naturalHeight;
-            lutCanvas.dataset.lutSize = cfg.size.toString();
-            lutCanvas.dataset.lutCols = cfg.cols.toString();
-            const lutCtx = lutCanvas.getContext('2d')!;
-            lutCtx.drawImage(lutImg, 0, 0);
-
-            // 2) 创建 outputCanvas 并执行 LUT 查找
+            // 加载原图
+            const srcImg = await loadImage(JourneyStore.capturedPhoto);
+            console.log('loaded srcImg', performance.now() - start, 'ms');
+            // 执行颜色查找
             const outputCanvas = document.createElement('canvas');
             applyLUT(srcImg, lutCanvas, outputCanvas);
+            console.log('applied LUT', performance.now() - start, 'ms');
 
-            // 3) 转成 Blob 并更新预览
-            const blob: Blob | null = await new Promise(resolve =>
-            outputCanvas.toBlob(b => resolve(b), 'image/png')
-            );
-            if (blob) {
-            JourneyStore.filterPhoto = URL.createObjectURL(blob);
+            // 如果有遮罩配置，叠加混合
+            if (cfg.mask && cfg.blendMode) {
+                const outCtx = outputCanvas.getContext('2d')!;
+                const maskImg = await loadImage(cfg.mask);
+                outCtx.globalCompositeOperation = cfg.blendMode;
+                outCtx.drawImage(maskImg, 0, 0, outputCanvas.width, outputCanvas.height);
+                outCtx.globalCompositeOperation = 'source-over';
+                console.log('applied mask blend', performance.now() - start, 'ms');
             }
+
+            // 渲染到页面 canvas
+            const pc = previewCanvas.value!;  // non-null assertion since we've checked above
+            pc.width = outputCanvas.width;
+            pc.height = outputCanvas.height;
+            const pct = pc.getContext('2d')!;
+            pct.clearRect(0, 0, pc.width, pc.height);
+            pct.drawImage(outputCanvas, 0, 0);
+            console.log('rendered to previewCanvas', performance.now() - start, 'ms');
+                        
+            // 保存结果到 JourneyStore.filterPhoto
+            previewCanvas.value?.toBlob(blob => {
+                if (blob) {
+                JourneyStore.filterPhoto = URL.createObjectURL(blob);
+                console.log('saved to store', performance.now() - start, 'ms');
+                }
+            }, 'image/png');
+            console.log('updated store', performance.now() - start, 'ms');
+
         } catch (err) {
             console.error('LUT 应用失败：', err);
-            // 回退到原图
             JourneyStore.filterPhoto = JourneyStore.capturedPhoto || '';
         }
-        };
+    };
 
-        // 格式化时间为XX:XX
-        const formattedTime = computed(() => {
-            const mins = Math.floor(timeLeft.value / 60);
-            const secs = timeLeft.value % 60;
-            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    // 加载测试图
+    const loadTestPhoto = () => {
+      const url = '/FilterSelect/WIN_20250418_10_47_06_Pro.jpg';
+      JourneyStore.capturedPhoto = url;
+      // JourneyStore.filterPhoto = url;
+      selectedFilterKey.value = null;
+      // 初始化 canvas 上直接显示原图
+      if (previewCanvas.value) {
+        loadImage(url).then(img => {
+          previewCanvas.value!.width = img.width;
+          previewCanvas.value!.height = img.height;
+          previewCanvas.value!.getContext('2d')!.drawImage(img, 0, 0);
         });
-        const capturedHD = async () => {
-            console.log('开始拼图')
-            const frameElement = document.querySelector('.FramePreview') as HTMLImageElement;
-            if (!frameElement || !JourneyStore.filterPhoto) {
-                console.log('没有找到FramePreview')
-                return;
-            }
+      }
+    };
 
-            const frameOriginal = await loadImage(frameElement.src);
-            const photoOriginal = await loadImage(JourneyStore.filterPhoto);
-            const canvas = document.createElement('canvas');
-            canvas.width = frameOriginal.naturalWidth;
-            canvas.height = frameOriginal.naturalHeight;
-            const ctx = canvas.getContext('2d')!;
+    // 合成相框图并跳转
+    const drawPhotoFrame = async () => {
+      try {
+        const [frameImg, filteredImg] = await Promise.all([
+          loadImage(JourneyStore.selectedFrameUrl!),
+          loadImage(JourneyStore.filterPhoto!),
+        ]);
+        const canvas = document.createElement('canvas');
+        canvas.width = frameImg.width;
+        canvas.height = frameImg.height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(
+          filteredImg,
+          0, 0, filteredImg.width, filteredImg.height,
+          0, 0, canvas.width, canvas.height
+        );
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(frameImg, 0, 0);
+        canvas.toBlob(blob => {
+          if (blob) {
+            const blobURL = URL.createObjectURL(blob);
+            JourneyStore.setPasterPhoto(blobURL);
+            JourneyStore.setPasterPhotoBlob(blob);
+          }
+        }, 'image/png', 1);
+      } catch (err) {
+        console.error('照片合成失败：', err);
+        JourneyStore.setPasterPhoto(JourneyStore.filterPhoto!);
+      }
+    };
 
-            ctx.drawImage(photoOriginal, 0, 0);
-            ctx.drawImage(frameOriginal, 0, 0);
-            canvas.toBlob(blob => {
-                if (blob) {
+    const handleConfirm = () => {
+      drawPhotoFrame();
+      router.push({ name: 'Paster' });
+    };
 
-                    JourneyStore.setfilterAndFramePhoto(URL.createObjectURL(blob));
-                    JourneyStore.setPasterPhoto(URL.createObjectURL(blob));
-                } else {
-                    console.error('Blob 创建失败');
-                }
-            }, 'image/png', 1);
-
-            console.log('拼图完成')
-        }
-
-        // // 图片加载器（增强版）
-        // const loadImage = (src: string): Promise<HTMLImageElement> => {
-        //     return new Promise((resolve, reject) => {
-        //         const img = new Image();
-        //         img.crossOrigin = 'anonymous'; // 添加 CORS 属性
-        //         img.decoding = 'async'; // 启用异步解码
-        //         img.src = src;
-
-        //         img.onload = () => {
-        //             if (img.naturalWidth === 0) {
-        //                 reject(new Error('图片加载异常'));
-        //             }
-        //             resolve(img);
-        //         };
-        //         img.onerror = (e) => reject(e);
-        //     });
-        // };
-
-        // 启动定时器
-        onMounted(() => {
-            nextTick(() => {
-                console.log(JourneyStore.capturedPhoto)
-            })
-
-            timer = setInterval(() => {
-                if (timeLeft.value > 0) {
-                    timeLeft.value--;
-                } else {
-                    handleConfirm();
-                    clearInterval(timer);
-                }
-            }, 1000);
-        });
-
-        // 清除定时器
-        onUnmounted(() => {
-            clearInterval(timer);
-        });
-
-        const JourneyStore = useJourneyStore();
-        const filterPhoto = computed(() => JourneyStore.filterPhoto);
-        // 滤镜参数集合
-        const filters = ref({
-            filter_1: 'blur(0.8px) brightness(95%) contrast(127%)  hue-rotate(0deg) saturate(156%) grayscale(45%) sepia(10%)',
-            filter_2: 'blur(0.7px) brightness(118%) contrast(84%)  hue-rotate(0deg) saturate(84%) grayscale(0%) sepia(0%)',
-            filter_3: 'blur(0.8px) brightness(104%) contrast(135%)  hue-rotate(0deg) saturate(177%) grayscale(77%) sepia(80%)',
-            filter_4: 'blur(0.8px) brightness(84%) contrast(129%)  hue-rotate(0deg) saturate(207%) grayscale(42%) sepia(10%)',
-            filter_5: 'blur(1.2px) brightness(107%) contrast(146%)  hue-rotate(0deg) saturate(101%) grayscale(100%) sepia(15%)',
-            filter_6: 'blur(1.2px) brightness(107%) contrast(146%)  hue-rotate(0deg) saturate(101%) grayscale(100%) sepia(15%)'
-        });
-        const filterConfigs: Record<FilterKey, FilterConfig> = {
-            filter_1: { mask: '/FilterSelect/Filter_2_mask.png', blendMode: 'lighten' },
-            filter_2: { mask: '/FilterSelect/Filter_2_mask.png', blendMode: 'lighten' },
-            filter_3: {
-                mask: '/FilterSelect/Filter_3_mask.png',
-                blendMode: 'screen'
-            },
-            filter_4: { mask: '/FilterSelect/Filter_4_mask.png', blendMode: 'overlay' },
-            filter_5: { mask: '/FilterSelect/Filter_5_mask.png', blendMode: 'overlay' },
-            filter_6: { mask: '/FilterSelect/Filter_6_mask.png', blendMode: 'multiply' },
-        };
-        const loadTestPhoto = () => {
-            // 这里替换为你的测试照片路径
-            const testPhotoURL = '/FilterSelect/20250516-185423.jpg';
-
-            // 更新store状态
-            JourneyStore.capturedPhoto = testPhotoURL;
-            JourneyStore.filterPhoto = testPhotoURL;
-
-            // 重置滤镜选择
-            selectedFilterKey.value = null;
-            activeFilter.value = '';
-
-            console.log('测试照片已加载');
-        };
-        const activeFilter = ref('');
-        // const selectedFilterKey = ref<FilterKey | null>(null);
-        // const applyFilter = async (filterKey: FilterKey) => {
-        //     if (selectedFilterKey.value === filterKey) {
-        //         // 取消选择时恢复原图
-        //         selectedFilterKey.value = null;
-        //         activeFilter.value = '';
-        //         JourneyStore.filterPhoto = JourneyStore.capturedPhoto || '';
-        //     } else {
-        //         // 应用新滤镜
-        //         selectedFilterKey.value = filterKey;
-        //         activeFilter.value = filters.value[filterKey];
-
-        //         // 立即生成预览图
-        //         try {
-        //             const success = await setFilter(activeFilter.value);
-        //             if (!success) {
-        //                 console.error('滤镜应用失败');
-        //                 JourneyStore.filterPhoto = JourneyStore.capturedPhoto || '';
-        //             }
-        //         } catch (error) {
-        //             console.error('滤镜处理异常:', error);
-        //         }
-        //     }
-        // };
-
-        // 优化后的 setFilter 函数
-        const setFilter = async (filter: string) => {
-            if (!JourneyStore.capturedPhoto) return false;
-
-            const filterKey = selectedFilterKey.value;
-            const config = filterKey ? filterConfigs[filterKey] : { mask: null, blendMode: null };
-            console.log('filterKey', filterKey);
-            console.log('config', config)
-            try {
-                // 并行加载资源
-                const [srcImage, maskImage] = await Promise.all([
-                    loadImage(JourneyStore.capturedPhoto!),
-                    config.mask ? loadImage(config.mask) : null
-                ]);
-
-                // 创建画布
-                const canvas = document.createElement('canvas');
-                canvas.width = srcImage.width;
-                canvas.height = srcImage.height;
-                const ctx = canvas.getContext('2d')!;
-
-                // 分步骤应用效果
-                ctx.save();
-
-                // 应用基础滤镜
-                ctx.filter = filter;
-                ctx.drawImage(srcImage, 0, 0);
-
-                // 应用混合遮罩
-                if (config.blendMode && maskImage) {
-                    ctx.globalCompositeOperation = config.blendMode;
-                    ctx.drawImage(maskImage, 0, 0, canvas.width, canvas.height);
-                }
-
-                ctx.restore();
-
-                // 更新预览图
-                return new Promise<boolean>((resolve) => {
-                    canvas.toBlob((blob) => {
-                        if (blob) {
-                            const blobURL = URL.createObjectURL(blob);
-
-
-                            JourneyStore.filterPhoto = blobURL;
-                            resolve(true);
-                        } else {
-                            resolve(false);
-                        }
-                    }, 'image/png');
-                });
-            } catch (error) {
-                console.error('图像处理失败:', error);
-                return false;
-            }
-        };
-        const drawPhotoFrame = async () => {
-            try {
-                // 并行加载资源
-                const [frameImage, filteredImage] = await Promise.all([
-                    loadImage(JourneyStore.selectedFrameUrl!),
-                    loadImage(JourneyStore.filterPhoto!)
-                ]);
-
-                // 创建画布（以相框尺寸为基准）
-                const canvas = document.createElement('canvas');
-                canvas.width = frameImage.width;
-                canvas.height = frameImage.height;
-                const ctx = canvas.getContext('2d')!;
-
-                // 分步绘制合成效果
-                // 1. 绘制滤镜后的照片（适配相框尺寸）
-                ctx.drawImage(
-                    filteredImage,
-                    0, 0, filteredImage.width, filteredImage.height,     // 源尺寸
-                    0, 0, canvas.width, canvas.height                    // 目标尺寸
-                );
-
-                // 2. 叠加相框（带透明通道）
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.drawImage(frameImage, 0, 0);
-
-                // 生成最终结果
-                canvas.toBlob(blob => {
-                    if (blob) {
-                        const blobURL = URL.createObjectURL(blob);
-                        JourneyStore.setPasterPhoto(blobURL);
-                        JourneyStore.setPasterPhotoBlob(blob);
-
-                    }
-                }, 'image/png', 1);
-
-                console.log('照片合成完成');
-            } catch (error) {
-                console.error('照片合成失败:', error);
-                // 降级处理：直接使用原始照片
-                JourneyStore.setPasterPhoto(JourneyStore.filterPhoto!);
-            }
-        };
-        const handleConfirm = async () => {
-            drawPhotoFrame();
-
-
-            router.push({
-                name: 'Paster'
-            });
-        };
-        return {
-            formattedTime, filterPhoto, applyFilter,
-            activeFilter, filters, handleConfirm, selectedFilterKey, sliderValue, timeAll,
-            selectedFrameUrl, loadTestPhoto
-        };
-    },
+    return {
+      selectedFrameUrl,
+    //   filterPhoto,
+      previewCanvas,
+      sliderValue,
+      timeAll,
+      formattedTime,
+      filterKeys,
+      selectedFilterKey,
+      applyFilter,
+      loadTestPhoto,
+      handleConfirm,
+    };
+  },
 });
 </script>
 
